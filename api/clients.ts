@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// @ts-ignore
-import { prisma } from '../lib/prisma.cjs';
+import { PrismaClient } from '@prisma/client';
+
+// Initialize Prisma client directly in the API file
+const prisma = new PrismaClient();
 
 export default async function handler(
   request: VercelRequest,
