@@ -23,7 +23,7 @@ export default async function handler(request: any, response: any) {
   try {
     console.log('📝 API Request:', request.method, request.url);
     console.log('🔗 Database URL present:', !!process.env.DATABASE_URL);
-    
+
     switch (request.method) {
       case 'GET':
         const { id } = request.query;
@@ -64,7 +64,7 @@ export default async function handler(request: any, response: any) {
             name: 'asc',
           },
         });
-        
+
         console.log('✅ Found clients:', clients.length);
         return response.status(200).json({
           clients,
@@ -168,13 +168,13 @@ export default async function handler(request: any, response: any) {
     console.error('🚨 Error details:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace'
+      stack: error instanceof Error ? error.stack : 'No stack trace',
     });
-    
+
     return response.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 }
