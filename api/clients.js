@@ -1,5 +1,5 @@
-// Use the CommonJS module version for better compatibility
-const { prisma } = require('../lib/prisma.cjs');
+// Import using ES modules syntax since package.json has "type": "module"
+import { prisma } from '../lib/prisma.cjs';
 
 export default async function handler(request, response) {
   // Enable CORS
