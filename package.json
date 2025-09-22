@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "npx prisma generate --no-engine && vite build",
     "postinstall": "npx prisma generate --no-engine",
-    "vercel-build": "npx prisma generate --no-engine && npx prisma db push && vite build",
+    "vercel-build": "npx prisma generate --no-engine && vite build",
     "preview": "vite preview",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

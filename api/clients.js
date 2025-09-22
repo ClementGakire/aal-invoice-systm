@@ -78,16 +78,16 @@ export default async function handler(request, response) {
       case 'POST':
         const { name, email, phone, address, contactPerson } = request.body;
 
-        if (!name || !email) {
+        if (!name) {
           return response.status(400).json({
-            error: 'Missing required fields: name and email are required',
+            error: 'Missing required fields: name is required',
           });
         }
 
         const newClient = await db.client.create({
           data: {
             name,
-            email,
+            email: email || null,
             phone: phone || null,
             address: address || null,
             contactPerson: contactPerson || null,
