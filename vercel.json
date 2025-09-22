@@ -1,16 +1,16 @@
 {
   "functions": {
     "api/clients.js": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@3.0.0"
     },
     "api/clients.ts": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@3.0.0"
     },
     "api/invoices.ts": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@3.0.0"
     },
     "api/jobs.ts": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@3.0.0"
     }
   },
   "rewrites": [
