@@ -17,7 +17,7 @@ import {
 const API_BASE_URL =
   process.env.NODE_ENV === 'production'
     ? 'https://aal-front-end.vercel.app' // Production Vercel URL
-    : 'https://aal-front-end.vercel.app'; // For local development API server
+    : 'http://localhost:3000'; // For local development API server
 
 // Flag to track if API is available
 let apiAvailable = true;
@@ -279,9 +279,7 @@ export const invoiceApi = {
   // Get all invoices
   getAll: async () => {
     try {
-      return await apiCall<{ invoices: any[]; total: number }>(
-        '/invoices-prisma'
-      );
+      return await apiCall<{ invoices: any[]; total: number }>('/invoices');
     } catch (error) {
       console.warn('Using mock data for invoices:', error);
       return { invoices: invoicesMock, total: invoicesMock.length };
@@ -291,7 +289,7 @@ export const invoiceApi = {
   // Get invoice by ID
   getById: async (id: string) => {
     try {
-      return await apiCall<any>(`/invoices-prisma?id=${id}`);
+      return await apiCall<any>(`/invoices?id=${id}`);
     } catch (error) {
       console.warn('Using mock data for invoice by ID:', error);
       const invoice = invoicesMock.find((i) => i.id === id);
@@ -303,10 +301,14 @@ export const invoiceApi = {
   // Create new invoice
   create: async (invoiceData: any) => {
     try {
-      return await apiCall<any>('/invoices-prisma', {
+      const result = await apiCall<any>('/invoices', {
         method: 'POST',
         body: JSON.stringify(invoiceData),
       });
+
+      // Extract the invoice object from the API response
+      const invoice = result?.invoice || result;
+      return invoice;
     } catch (error) {
       console.warn('Using mock data for creating invoice:', error);
       const newInvoice = { ...invoiceData, id: generateId() };
@@ -318,10 +320,14 @@ export const invoiceApi = {
   // Update invoice
   update: async (id: string, invoiceData: any) => {
     try {
-      return await apiCall<any>(`/invoices-prisma?id=${id}`, {
+      const result = await apiCall<any>(`/invoices?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(invoiceData),
       });
+
+      // Extract the invoice object from the API response
+      const invoice = result?.invoice || result;
+      return invoice;
     } catch (error) {
       console.warn('Using mock data for updating invoice:', error);
       updateInvoiceMock(id, invoiceData);
@@ -333,7 +339,7 @@ export const invoiceApi = {
   delete: async (id: string) => {
     try {
       return await apiCall<{ message: string; invoice: any }>(
-        `/invoices-prisma?id=${id}`,
+        `/invoices?id=${id}`,
         {
           method: 'DELETE',
         }
@@ -365,9 +371,7 @@ export const jobsApi = {
       if (filters?.clientId) params.append('clientId', filters.clientId);
 
       const queryString = params.toString();
-      const endpoint = queryString
-        ? `/jobs-prisma?${queryString}`
-        : '/jobs-prisma';
+      const endpoint = queryString ? `/jobs?${queryString}` : '/jobs';
 
       return await apiCall<{ jobs: any[]; total: number; filters: any }>(
         endpoint
@@ -404,7 +408,7 @@ export const jobsApi = {
   // Get job by ID
   getById: async (id: string) => {
     try {
-      return await apiCall<any>(`/jobs-prisma?id=${id}`);
+      return await apiCall<any>(`/jobs?id=${id}`);
     } catch (error) {
       console.warn('Using mock data for job by ID:', error);
       const job = jobsMock.find((j) => j.id === id);
@@ -416,10 +420,14 @@ export const jobsApi = {
   // Create new job
   create: async (jobData: any) => {
     try {
-      return await apiCall<any>('/jobs-prisma', {
+      const result = await apiCall<any>('/jobs', {
         method: 'POST',
         body: JSON.stringify(jobData),
       });
+
+      // Extract the job object from the API response
+      const job = result?.job || result;
+      return job;
     } catch (error) {
       console.warn('Using mock data for creating job:', error);
       const newJob = { ...jobData, id: generateId() };
@@ -431,10 +439,14 @@ export const jobsApi = {
   // Update job
   update: async (id: string, jobData: any) => {
     try {
-      return await apiCall<any>(`/jobs-prisma?id=${id}`, {
+      const result = await apiCall<any>(`/jobs?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(jobData),
       });
+
+      // Extract the job object from the API response
+      const job = result?.job || result;
+      return job;
     } catch (error) {
       console.warn('Using mock data for updating job:', error);
       updateJobMock(id, jobData);
@@ -445,12 +457,9 @@ export const jobsApi = {
   // Delete job
   delete: async (id: string) => {
     try {
-      return await apiCall<{ message: string; job: any }>(
-        `/jobs-prisma?id=${id}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      return await apiCall<{ message: string; job: any }>(`/jobs?id=${id}`, {
+        method: 'DELETE',
+      });
     } catch (error) {
       console.warn('Using mock data for deleting job:', error);
       const job = jobsMock.find((j) => j.id === id);
@@ -550,8 +559,10 @@ export const clientsApi = {
         body: JSON.stringify(clientData),
       });
 
-      console.log('✅ Successfully created client:', result?.name || 'Unknown');
-      return result;
+      // Extract the client object from the API response
+      const client = result?.client || result;
+      console.log('✅ Successfully created client:', client?.name || 'Unknown');
+      return client;
     } catch (error) {
       console.error('❌ Failed to create client in database:', error);
 
@@ -579,8 +590,10 @@ export const clientsApi = {
         body: JSON.stringify(clientData),
       });
 
-      console.log('✅ Successfully updated client:', result?.name || 'Unknown');
-      return result;
+      // Extract the client object from the API response
+      const client = result?.client || result;
+      console.log('✅ Successfully updated client:', client?.name || 'Unknown');
+      return client;
     } catch (error) {
       console.error('❌ Failed to update client in database:', error);
 

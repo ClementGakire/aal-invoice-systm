@@ -1,5 +1,5 @@
 // Import edge-compatible Prisma client
-import prisma from '../lib/prisma-edge.js'
+import prisma from '../lib/prisma-edge.js';
 
 export default async function handler(request, response) {
   // Enable CORS
@@ -21,7 +21,7 @@ export default async function handler(request, response) {
   try {
     console.log('📝 API Request:', request.method, request.url);
     console.log('🔗 Database URL present:', !!process.env.DATABASE_URL);
-    
+
     switch (request.method) {
       case 'GET':
         const { id } = request.query;
@@ -29,7 +29,7 @@ export default async function handler(request, response) {
         if (id) {
           console.log('🔍 Finding client with ID:', id);
           const client = await prisma.client.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id }, // Use string ID directly, not parseInt
             include: {
               jobs: {
                 select: { id: true, title: true, status: true },
@@ -57,7 +57,7 @@ export default async function handler(request, response) {
             name: 'asc',
           },
         });
-        
+
         console.log('✅ Found clients:', clients.length);
         return response.status(200).json({
           clients,
@@ -103,7 +103,7 @@ export default async function handler(request, response) {
         }
 
         const updatedClient = await prisma.client.update({
-          where: { id: parseInt(updateId) },
+          where: { id: updateId }, // Use string ID directly, not parseInt
           data: updateData,
           include: {
             _count: {
@@ -120,12 +120,16 @@ export default async function handler(request, response) {
       case 'DELETE':
         const deleteId = request.query.id;
 
+        console.log('🗑️ DELETE request - query:', request.query);
+        console.log('🗑️ DELETE request - deleteId:', deleteId);
+        console.log('🗑️ DELETE request - URL:', request.url);
+
         if (!deleteId) {
           return response.status(400).json({ error: 'Client ID is required' });
         }
 
         const deletedClient = await prisma.client.delete({
-          where: { id: parseInt(deleteId) },
+          where: { id: deleteId }, // Use string ID directly, not parseInt
         });
 
         return response.status(200).json({
@@ -150,13 +154,13 @@ export default async function handler(request, response) {
     console.error('🚨 Error details:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace'
+      stack: error instanceof Error ? error.stack : 'No stack trace',
     });
-    
+
     return response.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
-};
+}
