@@ -1,9 +1,6 @@
 import React from 'react';
-import {
-  type Invoice,
-  type LogisticsJob,
-  jobsMock,
-} from '../services/mockData';
+import { type Invoice, type LogisticsJob } from '../services/mockData';
+import { useJobs, useClients } from '../hooks/useApi';
 import {
   getJobTypeDisplayName,
   getPrimaryDocument,
@@ -124,17 +121,61 @@ export default function PrintableInvoice({
   invoice,
   onClose,
 }: PrintableInvoiceProps) {
+  const { jobs } = useJobs();
+  const { clients } = useClients();
+
   const handlePrint = () => {
     window.print();
   };
 
   // Get associated job details
   const associatedJob = invoice.jobId
-    ? (jobsMock.find((job) => job.id === invoice.jobId) as LogisticsJob)
+    ? (jobs.find(
+        (job: LogisticsJob) => job.id === invoice.jobId
+      ) as LogisticsJob)
     : null;
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', {
+  // Get associated client details
+  const associatedClient = invoice.clientId
+    ? clients.find((client: any) => client.id === invoice.clientId)
+    : null;
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('PrintableInvoice - Invoice:', invoice);
+    console.log('PrintableInvoice - Jobs available:', jobs.length);
+    console.log('PrintableInvoice - Clients available:', clients.length);
+    console.log('PrintableInvoice - Looking for job ID:', invoice.jobId);
+    console.log('PrintableInvoice - Looking for client ID:', invoice.clientId);
+    console.log('PrintableInvoice - Associated job found:', !!associatedJob);
+    console.log(
+      'PrintableInvoice - Associated client found:',
+      !!associatedClient
+    );
+    if (invoice.jobId && jobs.length > 0) {
+      console.log(
+        'PrintableInvoice - Job IDs available:',
+        jobs.map((j) => j.id)
+      );
+    }
+    if (invoice.clientId && clients.length > 0) {
+      console.log(
+        'PrintableInvoice - Client IDs available:',
+        clients.map((c) => c.id)
+      );
+    }
+  }, [invoice, jobs, clients, associatedJob, associatedClient]);
+
+  const formatDate = (date: Date | string) => {
+    // Ensure we have a valid Date object
+    const dateObj = date instanceof Date ? date : new Date(date);
+
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      return 'Invalid Date';
+    }
+
+    return dateObj.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -193,6 +234,21 @@ export default function PrintableInvoice({
             }
             .shipment-details {
               font-size: 7px !important;
+            }
+            .job-details-section {
+              font-size: 7px !important;
+              margin-bottom: 8px !important;
+            }
+            .job-details-section .grid {
+              gap: 4px !important;
+            }
+            .job-details-section .text-xs {
+              font-size: 6px !important;
+              line-height: 1.2 !important;
+            }
+            .job-details-section .bg-blue-50 {
+              background-color: #f8fafc !important;
+              border: 1px solid #e2e8f0 !important;
             }
             .invoice-header {
               font-size: 8px !important;
@@ -279,12 +335,52 @@ export default function PrintableInvoice({
             <div className="flex justify-between mb-4 print:mb-3">
               <div className="w-1/2">
                 <div className="font-semibold mb-1">To,</div>
-                <div className="font-bold">{invoice.clientName}</div>
-                <div className="text-sm">GIKONDO, NAEB STREET NO KKK6</div>
-                <div className="text-sm">KIGALI</div>
-                <div className="text-sm">KGL</div>
-                <div className="text-sm">RWANDA</div>
-                <div className="text-sm">Ph: 101478342</div>
+                <div className="font-bold">
+                  {associatedClient?.name || invoice.clientName}
+                </div>
+                {associatedClient ? (
+                  <div className="space-y-1">
+                    {associatedClient.address && (
+                      <div className="text-sm">{associatedClient.address}</div>
+                    )}
+                    {associatedClient.phone && (
+                      <div className="text-sm">
+                        Ph: {associatedClient.phone}
+                      </div>
+                    )}
+                    {associatedClient.email && (
+                      <div className="text-sm">
+                        Email: {associatedClient.email}
+                      </div>
+                    )}
+                    {associatedClient.tin && (
+                      <div className="text-sm">TIN: {associatedClient.tin}</div>
+                    )}
+                    {!associatedClient.address &&
+                      !associatedClient.phone &&
+                      !associatedClient.email && (
+                        <div className="text-sm text-gray-400 italic">
+                          No additional contact information available
+                        </div>
+                      )}
+                  </div>
+                ) : invoice.clientId ? (
+                  <div className="space-y-1">
+                    <div className="text-sm text-orange-600">
+                      Client details not found
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Client ID: {invoice.clientId}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Available clients: {clients.length}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400 italic">
+                    No client information available
+                  </div>
+                )}
               </div>
               <div className="w-1/2 text-right text-sm">
                 <div className="grid grid-cols-2 gap-1">
@@ -299,7 +395,7 @@ export default function PrintableInvoice({
                   <div className="font-semibold">Job Date:</div>
                   <span>
                     {associatedJob?.createdAt
-                      ? formatDate(new Date(associatedJob.createdAt))
+                      ? formatDate(associatedJob.createdAt)
                       : '01/03/2024'}
                   </span>
                   <div className="font-semibold">Currency Code:</div>
@@ -309,151 +405,241 @@ export default function PrintableInvoice({
             </div>
 
             {/* Shipment Details */}
-            {associatedJob && (
-              <div className="mb-4 print:mb-3">
-                <div className="font-semibold mb-2">Shipment Details</div>
-                <div className="shipment-details grid grid-cols-3 gap-2 text-xs">
-                  {/* Column 1 */}
-                  <div className="space-y-1">
-                    <div>
-                      <span className="font-medium">Shipper:</span>{' '}
-                      {associatedJob.shipper || '-'}
+            {associatedJob ? (
+              <div className="job-details-section mb-4 print:mb-3">
+                <div className="font-semibold mb-3 text-base print:text-sm border-b border-gray-300 pb-1">
+                  Shipment Details
+                </div>
+
+                {/* Traditional Shipment Information Grid */}
+                <div className="mb-4 print:mb-3">
+                  <div className="grid grid-cols-3 gap-4 text-xs">
+                    {/* Column 1 - Origin & Shipper */}
+                    <div className="space-y-2">
+                      <div className="font-semibold text-sm text-blue-600 mb-2">
+                        Origin & Shipper
+                      </div>
+                      <div>
+                        <span className="font-medium">Port of Loading:</span>
+                        <br />
+                        <span className="text-gray-600">
+                          {associatedJob.portOfLoading || '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Shipper:</span>
+                        <br />
+                        <span className="text-gray-600">
+                          {associatedJob.shipper || '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Job Number:</span>
+                        <br />
+                        <span className="text-gray-600">
+                          {associatedJob.jobNumber}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Service Type:</span>
+                        <br />
+                        <span className="text-blue-600 font-medium">
+                          {getJobTypeDisplayName(associatedJob.jobType)}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="font-medium">Shipper Ref:</span> -
+
+                    {/* Column 2 - Destination & Consignee */}
+                    <div className="space-y-2">
+                      <div className="font-semibold text-sm text-blue-600 mb-2">
+                        Destination & Consignee
+                      </div>
+                      <div>
+                        <span className="font-medium">Port of Discharge:</span>
+                        <br />
+                        <span className="text-gray-600">
+                          {associatedJob.portOfDischarge || '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Consignee:</span>
+                        <br />
+                        <span className="text-gray-600">
+                          {associatedJob.consignee || '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Client:</span>
+                        <br />
+                        <span className="text-gray-600">
+                          {associatedJob.clientName || invoice.clientName}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Shipment Date:</span>
+                        <br />
+                        <span className="text-gray-600">
+                          {associatedJob.createdAt
+                            ? formatDate(associatedJob.createdAt)
+                            : '-'}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="font-medium">Port Of Loading:</span>{' '}
-                      {associatedJob.portOfLoading || '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Port Of Discharge:</span>{' '}
-                      {associatedJob.portOfDischarge || '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Place of Delivery:</span>{' '}
-                      {associatedJob.portOfDischarge || '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Container:</span>{' '}
-                      {isSeaFreightJob(associatedJob)
-                        ? associatedJob.billOfLading?.houseBL || '-'
-                        : '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Vehicle:</span>{' '}
-                      {isRoadFreightJob(associatedJob)
-                        ? associatedJob.plateNumber || '-'
-                        : '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Package:</span>{' '}
-                      {associatedJob.package || '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Volume:</span> -
-                    </div>
-                    <div>
-                      <span className="font-medium">Goods Description:</span>{' '}
-                      {associatedJob.goodDescription || '-'}
+
+                    {/* Column 3 - Transport Documents */}
+                    <div className="space-y-2">
+                      <div className="font-semibold text-sm text-blue-600 mb-2">
+                        Transport Documents
+                      </div>
+                      {isAirFreightJob(associatedJob) && (
+                        <>
+                          <div>
+                            <span className="font-medium">Master AWB:</span>
+                            <br />
+                            <span className="text-gray-600">
+                              {associatedJob.awb?.masterAirWaybill || '-'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium">House AWB:</span>
+                            <br />
+                            <span className="text-gray-600">
+                              {associatedJob.awb?.houseAirWaybill || '-'}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      {isSeaFreightJob(associatedJob) && (
+                        <>
+                          <div>
+                            <span className="font-medium">Master B/L:</span>
+                            <br />
+                            <span className="text-gray-600">
+                              {associatedJob.billOfLading?.masterBL || '-'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium">House B/L:</span>
+                            <br />
+                            <span className="text-gray-600">
+                              {associatedJob.billOfLading?.houseBL || '-'}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      {isRoadFreightJob(associatedJob) && (
+                        <>
+                          <div>
+                            <span className="font-medium">Plate Number:</span>
+                            <br />
+                            <span className="text-gray-600">
+                              {associatedJob.plateNumber || '-'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium">Container No:</span>
+                            <br />
+                            <span className="text-gray-600">
+                              {associatedJob.containerNumber || '-'}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Column 2 */}
-                  <div className="space-y-1">
+                {/* Cargo Details */}
+                <div className="mb-3 print:mb-2">
+                  <div className="font-semibold mb-2 text-sm text-gray-700">
+                    Cargo Details
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-xs bg-gray-50 p-3 rounded">
                     <div>
-                      <span className="font-medium">
-                        Mumbai Textiles Export
+                      <span className="font-medium">Package Type:</span>
+                      <br />
+                      <span className="text-gray-600">
+                        {associatedJob.package || '-'}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium">Consignee:</span>{' '}
-                      {associatedJob.consignee || '-'}
+                      <span className="font-medium">Description of Goods:</span>
+                      <br />
+                      <span className="text-gray-600">
+                        {associatedJob.goodDescription || '-'}
+                      </span>
                     </div>
                     <div>
-                      <span className="font-medium">Consignee Ref:</span> -
+                      <span className="font-medium">Gross Weight:</span>
+                      <br />
+                      <span className="text-gray-600">
+                        {associatedJob.grossWeight
+                          ? `${associatedJob.grossWeight} kg`
+                          : '-'}
+                      </span>
                     </div>
                     <div>
-                      <span className="font-medium">Service/Movement:</span>{' '}
-                      {getJobTypeDisplayName(associatedJob.jobType)}
-                    </div>
-                    <div>
-                      <span className="font-medium">Master No:</span>{' '}
-                      {isSeaFreightJob(associatedJob)
-                        ? associatedJob.billOfLading?.masterBL || '-'
-                        : isAirFreightJob(associatedJob)
-                        ? associatedJob.awb?.masterAirWaybill || '-'
-                        : '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">House No:</span>{' '}
-                      {isSeaFreightJob(associatedJob)
-                        ? associatedJob.billOfLading?.houseBL || '-'
-                        : isAirFreightJob(associatedJob)
-                        ? associatedJob.awb?.houseAirWaybill || '-'
-                        : '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Vessel & Voyage:</span> -
-                    </div>
-                    <div>
-                      <span className="font-medium">Flight No & Date:</span> -
-                    </div>
-                    <div>
-                      <span className="font-medium">Gross Weight:</span>{' '}
-                      {associatedJob.grossWeight
-                        ? `${associatedJob.grossWeight} KGS`
-                        : '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Chargeable Weight:</span>{' '}
-                      {associatedJob.chargeableWeight
-                        ? `${associatedJob.chargeableWeight} KGS`
-                        : '-'}
+                      <span className="font-medium">Chargeable Weight:</span>
+                      <br />
+                      <span className="text-gray-600">
+                        {associatedJob.chargeableWeight
+                          ? `${associatedJob.chargeableWeight} kg`
+                          : '-'}
+                      </span>
                     </div>
                   </div>
+                </div>
 
-                  {/* Column 3 */}
-                  <div className="space-y-1">
+                {/* Additional Job Information */}
+                <div className="mb-3 print:mb-2">
+                  <div className="font-semibold mb-2 text-sm text-gray-700">
+                    Additional Information
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
                     <div>
-                      <span className="font-medium">
-                        Creative Fashion Agency
+                      <span className="font-medium">Job ID:</span>
+                      <br />
+                      <span className="text-gray-600 font-mono text-xs">
+                        {associatedJob.id}
                       </span>
                     </div>
-                    <div>-</div>
                     <div>
-                      <span className="font-medium">
-                        {getJobTypeDisplayName(associatedJob.jobType)}
+                      <span className="font-medium">Status:</span>
+                      <br />
+                      <span className="text-gray-600 capitalize">
+                        {associatedJob.status || 'OPEN'}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium">MBL:</span>{' '}
-                      {isSeaFreightJob(associatedJob)
-                        ? associatedJob.billOfLading?.masterBL || '-'
-                        : '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">HBL:</span>{' '}
-                      {isSeaFreightJob(associatedJob)
-                        ? associatedJob.billOfLading?.houseBL || '-'
-                        : '-'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Vessel No & Date:</span> -
-                    </div>
-                    <div>-</div>
-                    <div>
-                      <span className="font-medium">KGS:</span>{' '}
-                      {associatedJob.grossWeight || '-'} KGS
-                    </div>
-                    <div>
-                      <span className="font-medium">KGS:</span>{' '}
-                      {associatedJob.chargeableWeight || '-'} KGS
+                      <span className="font-medium">Last Updated:</span>
+                      <br />
+                      <span className="text-gray-600">
+                        {associatedJob.updatedAt
+                          ? formatDate(associatedJob.updatedAt)
+                          : '-'}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            ) : invoice.jobId ? (
+              <div className="mb-4 print:mb-3">
+                <div className="font-semibold mb-3 text-base print:text-sm border-b border-gray-300 pb-1">
+                  Shipment Details
+                </div>
+                <div className="text-sm text-gray-500 bg-yellow-50 p-3 rounded border border-yellow-200">
+                  <p className="font-medium text-yellow-700 mb-1">
+                    Job details not available
+                  </p>
+                  <p>Job ID: {invoice.jobId}</p>
+                  <p>Available jobs: {jobs.length}</p>
+                  <p className="text-xs mt-2">
+                    The job associated with this invoice could not be found in
+                    the current job list.
+                  </p>
+                </div>
+              </div>
+            ) : null}
 
             {/* Charges Table */}
             <div className="mb-3 print:mb-2">

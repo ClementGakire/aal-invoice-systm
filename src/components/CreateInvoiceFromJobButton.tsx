@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Package, FileText } from 'lucide-react';
-import { jobsMock } from '../services/mockData';
+import { useJobs, useInvoices } from '../hooks/useApi';
 import {
   generateInvoiceLineItems,
   getJobTypeDisplayName,
@@ -11,7 +11,7 @@ import {
 import type { LogisticsJob } from '../types/logistics';
 
 interface CreateInvoiceFromJobButtonProps {
-  onInvoiceCreated: (invoice: any) => void;
+  onInvoiceCreated?: (invoice: any) => void;
 }
 
 export default function CreateInvoiceFromJobButton({
@@ -21,7 +21,9 @@ export default function CreateInvoiceFromJobButton({
   const [selectedJobId, setSelectedJobId] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
 
-  const availableJobs = jobsMock;
+  // Use the jobs API hook to fetch jobs
+  const { jobs: availableJobs, loading: jobsLoading } = useJobs();
+  const { createInvoice } = useInvoices();
 
   const getBookingNumber = (job: LogisticsJob): string | undefined => {
     if (isSeaFreightJob(job)) {
@@ -34,39 +36,48 @@ export default function CreateInvoiceFromJobButton({
     return undefined;
   };
 
-  const handleCreateInvoice = () => {
+  const handleCreateInvoice = async () => {
     if (!selectedJobId || !invoiceNumber) return;
 
-    const selectedJob = jobsMock.find(
-      (job) => job.id === selectedJobId
+    const selectedJob = availableJobs.find(
+      (job: LogisticsJob) => job.id === selectedJobId
     ) as LogisticsJob;
     if (!selectedJob) return;
 
-    // Generate line items based on the job
-    const lineItems = generateInvoiceLineItems(selectedJob);
-    const subTotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-    const total = lineItems.reduce((sum, item) => sum + item.billingAmount, 0);
+    try {
+      // Generate line items based on the job
+      const lineItems = generateInvoiceLineItems(selectedJob);
+      const subTotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
+      const total = lineItems.reduce(
+        (sum, item) => sum + item.billingAmount,
+        0
+      );
 
-    const newInvoice = {
-      id: 'inv_' + Date.now(),
-      number: invoiceNumber,
-      clientId: selectedJob.clientId,
-      clientName: selectedJob.clientName,
-      jobId: selectedJob.id,
-      jobNumber: selectedJob.jobNumber,
-      bookingNumber: getBookingNumber(selectedJob),
-      status: 'unpaid' as const,
-      currency: 'USD',
-      invoiceDate: new Date(),
-      lineItems,
-      subTotal,
-      total,
-    };
+      const invoiceData = {
+        clientId: selectedJob.clientId,
+        jobId: selectedJob.id,
+        jobNumber: selectedJob.jobNumber,
+        bookingNumber: getBookingNumber(selectedJob),
+        status: 'PENDING',
+        currency: 'USD',
+        invoiceDate: new Date().toISOString(),
+        lineItems,
+        subTotal,
+        total,
+      };
 
-    onInvoiceCreated(newInvoice);
-    setIsOpen(false);
-    setSelectedJobId('');
-    setInvoiceNumber('');
+      const newInvoice = await createInvoice(invoiceData);
+
+      // Call the optional callback
+      onInvoiceCreated?.(newInvoice);
+
+      setIsOpen(false);
+      setSelectedJobId('');
+      setInvoiceNumber('');
+    } catch (error) {
+      console.error('Failed to create invoice:', error);
+      alert('Failed to create invoice. Please try again.');
+    }
   };
 
   return (
@@ -109,16 +120,19 @@ export default function CreateInvoiceFromJobButton({
                   value={selectedJobId}
                   onChange={(e) => setSelectedJobId(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  disabled={jobsLoading}
                 >
-                  <option value="">Choose a job...</option>
-                  {availableJobs.map((job) => (
+                  <option value="">
+                    {jobsLoading ? 'Loading jobs...' : 'Choose a job...'}
+                  </option>
+                  {availableJobs.map((job: LogisticsJob) => (
                     <option key={job.id} value={job.id}>
                       {job.jobNumber} - {job.clientName} (
                       {getJobTypeDisplayName(job.jobType)})
                     </option>
                   ))}
                 </select>
-                {availableJobs.length === 0 && (
+                {!jobsLoading && availableJobs.length === 0 && (
                   <p className="text-sm text-gray-500 mt-1">
                     No jobs available for invoicing
                   </p>
@@ -127,8 +141,8 @@ export default function CreateInvoiceFromJobButton({
 
               {selectedJobId &&
                 (() => {
-                  const job = jobsMock.find(
-                    (j) => j.id === selectedJobId
+                  const job = availableJobs.find(
+                    (j: LogisticsJob) => j.id === selectedJobId
                   ) as LogisticsJob;
                   const lineItems = generateInvoiceLineItems(job);
                   const total = lineItems.reduce(

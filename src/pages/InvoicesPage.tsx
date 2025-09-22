@@ -159,12 +159,7 @@ export default function InvoicesPage() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="page-title">Invoices</h2>
         <div className="flex gap-2">
-          <CreateInvoiceFromJobButton
-            onInvoiceCreated={(newInvoice: any) => {
-              // The hook automatically updates the list, but we could add additional logic here
-              console.log('New invoice created:', newInvoice);
-            }}
-          />
+          <CreateInvoiceFromJobButton />
           <NewInvoiceButton onInvoiceCreated={createInvoice} />
           <button
             onClick={() => {
@@ -234,9 +229,10 @@ export default function InvoicesPage() {
               <option value="all">All Status</option>
               <option value="paid">Paid</option>
               <option value="unpaid">Unpaid</option>
+              <option value="pending">Pending</option>
               <option value="draft">Draft</option>
-              <option value="sent">Sent</option>
               <option value="overdue">Overdue</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -258,6 +254,12 @@ export default function InvoicesPage() {
                         ? 'bg-green-100 text-green-700'
                         : i.status === 'UNPAID'
                         ? 'bg-red-100 text-red-700'
+                        : i.status === 'PENDING'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : i.status === 'DRAFT'
+                        ? 'bg-gray-100 text-gray-700'
+                        : i.status === 'OVERDUE'
+                        ? 'bg-red-200 text-red-800'
                         : 'bg-gray-100 text-gray-700'
                     }`}
                   >
@@ -380,12 +382,18 @@ export default function InvoicesPage() {
                   </label>
                   <div
                     className={`text-sm p-2 border rounded font-medium ${
-                      viewingInvoice.status === 'paid'
+                      viewingInvoice.status === 'PAID'
                         ? 'text-green-700 bg-green-50'
-                        : 'text-red-700 bg-red-50'
+                        : viewingInvoice.status === 'UNPAID'
+                        ? 'text-red-700 bg-red-50'
+                        : viewingInvoice.status === 'PENDING'
+                        ? 'text-yellow-700 bg-yellow-50'
+                        : viewingInvoice.status === 'DRAFT'
+                        ? 'text-gray-700 bg-gray-50'
+                        : 'text-gray-700 bg-gray-50'
                     }`}
                   >
-                    {viewingInvoice.status.toUpperCase()}
+                    {viewingInvoice.status}
                   </div>
                 </div>
               </div>
@@ -627,12 +635,12 @@ function EditInvoiceModal({
               onChange={(e) => setStatus(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
             >
-              <option value="draft">Draft</option>
-              <option value="sent">Sent</option>
-              <option value="paid">Paid</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="overdue">Overdue</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="DRAFT">Draft</option>
+              <option value="PENDING">Pending</option>
+              <option value="PAID">Paid</option>
+              <option value="UNPAID">Unpaid</option>
+              <option value="OVERDUE">Overdue</option>
+              <option value="CANCELLED">Cancelled</option>
             </select>
           </div>
         </div>
@@ -662,24 +670,29 @@ function NewInvoiceButton({
   onInvoiceCreated: (data: any) => Promise<any>;
 }) {
   const [open, setOpen] = useState(false);
-  const [number, setNumber] = useState('');
-  const [clientName, setClientName] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState('');
   const [total, setTotal] = useState('');
+  const [description, setDescription] = useState('');
+  const { clients } = useClients();
 
   const submit = async () => {
-    if (!number || !clientName) return;
+    if (!invoiceNumber || !selectedClientId) return;
 
     try {
+      const selectedClient = clients.find(
+        (c: any) => c.id === selectedClientId
+      );
+
       await onInvoiceCreated({
-        number,
-        clientId: '', // Will need to handle client selection properly
-        status: 'UNPAID',
+        clientId: selectedClientId,
+        status: 'DRAFT',
         total: Number(total) || 0,
         currency: 'USD',
         invoiceDate: new Date().toISOString(),
         lineItems: [
           {
-            description: 'Service charge',
+            description: description || 'Service charge',
             basedOn: 'Service',
             rate: Number(total) || 0,
             currency: 'USD',
@@ -690,58 +703,106 @@ function NewInvoiceButton({
         subTotal: Number(total) || 0,
       });
 
-      setNumber('');
-      setClientName('');
+      setInvoiceNumber('');
+      setSelectedClientId('');
       setTotal('');
+      setDescription('');
       setOpen(false);
     } catch (error) {
       console.error('Failed to create invoice:', error);
       alert('Failed to create invoice. Please try again.');
     }
   };
+
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-3 py-2 rounded bg-sky-600 text-white text-sm shadow hover:bg-sky-700 transition"
+        className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition"
       >
+        <Plus className="w-4 h-4" />
         New Invoice
       </button>
       {open && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30">
           <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md animate-fadein">
-            <div className="mb-4 text-lg font-semibold">New Invoice</div>
-            <input
-              value={number}
-              onChange={(e) => setNumber(e.target.value)}
-              placeholder="Invoice number"
-              className="border px-2 py-1 rounded w-full mb-3 focus:ring focus:ring-sky-200"
-              autoFocus
-            />
-            <input
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="Client name"
-              className="border px-2 py-1 rounded w-full mb-3 focus:ring focus:ring-sky-200"
-            />
-            <input
-              value={total}
-              onChange={(e) => setTotal(e.target.value)}
-              placeholder="Total"
-              className="border px-2 py-1 rounded w-full mb-4 focus:ring focus:ring-sky-200"
-            />
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={submit}
-                className="px-4 py-2 rounded bg-sky-600 text-white shadow hover:bg-sky-700 transition"
-              >
-                Create
-              </button>
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="w-5 h-5 text-sky-600" />
+              <h3 className="text-lg font-semibold">Create New Invoice</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Invoice Number
+                </label>
+                <input
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  placeholder="INV-001"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Client
+                </label>
+                <select
+                  value={selectedClientId}
+                  onChange={(e) => setSelectedClientId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
+                >
+                  <option value="">Select a client...</option>
+                  {clients.map((client: any) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <input
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Service description"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Total Amount
+                </label>
+                <input
+                  value={total}
+                  onChange={(e) => setTotal(e.target.value)}
+                  placeholder="0.00"
+                  type="number"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setOpen(false)}
-                className="px-4 py-2 rounded border shadow hover:bg-gray-100 transition"
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition"
               >
                 Cancel
+              </button>
+              <button
+                onClick={submit}
+                disabled={!invoiceNumber || !selectedClientId}
+                className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Create Invoice
               </button>
             </div>
           </div>
