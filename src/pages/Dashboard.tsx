@@ -1,14 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   clientsMock,
   invoicesMock,
   jobsMock,
   expensesMock,
 } from '../services/mockData';
+import { api, isUsingFallback, testApiConnection } from '../services/api';
 import { Charts } from '../components/Charts';
-import { Users, FileText, Briefcase, DollarSign } from 'lucide-react';
+import { Users, FileText, Briefcase, DollarSign, Database } from 'lucide-react';
+import ApiDebugger from '../components/ApiDebugger';
+import ApiExplorer from '../components/ApiExplorer';
 
 export default function Dashboard() {
+  const [clients, setClients] = useState<any[]>([]);
+  const [apiStatus, setApiStatus] = useState<'loading' | 'success' | 'error'>(
+    'loading'
+  );
+  const [showDebugger, setShowDebugger] = useState<boolean>(false);
+
+  // Test API connection on component mount
+  useEffect(() => {
+    testApiConnection().then((available) => {
+      setApiStatus(available ? 'success' : 'error');
+      if (available) {
+        loadRealData();
+      }
+    });
+  }, []);
+
+  // Function to load data from the real API
+  const loadRealData = async () => {
+    try {
+      const clientsResult = await api.clients.getAll();
+      if (clientsResult.clients && clientsResult.clients.length > 0) {
+        setClients(clientsResult.clients);
+      }
+    } catch (error) {
+      console.error('Error loading real data', error);
+      setApiStatus('error');
+    }
+  };
+
+  // Use either real data or mock data
+  const clientsData = clients.length > 0 ? clients : clientsMock;
   const openInvoices = invoicesMock.filter((i) => i.status !== 'paid').length;
   const activeJobs = jobsMock.filter((j) => j.status !== 'delivered').length;
   const totalRevenue = invoicesMock
@@ -20,7 +54,43 @@ export default function Dashboard() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="page-title">Dashboard</h2>
+        <div className="flex items-center space-x-2">
+          {isUsingFallback() ? (
+            <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-700 text-sm flex items-center">
+              <Database className="w-4 h-4 mr-1" /> Using Mock Data
+            </span>
+          ) : (
+            <span className="px-2 py-1 rounded bg-green-100 text-green-700 text-sm flex items-center">
+              <Database className="w-4 h-4 mr-1" /> Using Real Database
+            </span>
+          )}
+          <button
+            className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-sm"
+            onClick={() => setShowDebugger(!showDebugger)}
+          >
+            {showDebugger ? 'Hide Debugger' : 'Debug API'}
+          </button>
+          <button
+            className="px-2 py-1 rounded bg-red-100 text-red-600 text-sm"
+            onClick={() =>
+              alert(
+                'Server Issue Detected: The API server is returning source code instead of executing it. This is likely a misconfiguration of the Vercel development server. Check the server logs for more details.'
+              )
+            }
+          >
+            ⚠️ API Server Issue
+          </button>
+        </div>
       </div>
+
+      {showDebugger && (
+        <div className="mb-6">
+          <ApiDebugger />
+          <div className="mt-4">
+            <ApiExplorer endpoint="/api/base64test" />
+          </div>
+        </div>
+      )}
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="card flex items-center gap-4">
@@ -29,7 +99,7 @@ export default function Dashboard() {
           </div>
           <div>
             <div className="text-sm text-gray-600">Clients</div>
-            <div className="text-2xl font-semibold">{clientsMock.length}</div>
+            <div className="text-2xl font-semibold">{clientsData.length}</div>
           </div>
         </div>
         <div className="card flex items-center gap-4">

@@ -1,13 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  jobsMock,
-  addJob,
-  updateJob,
-  deleteJob,
-  clientsMock,
-  type LogisticsJob,
-  type JobType,
-} from '../services/mockData';
+import { useJobs, useClients } from '../hooks/useApi';
+import { isUsingFallback } from '../services/api';
+import FallbackBanner from '../components/FallbackBanner';
 import {
   getJobTypeDisplayName,
   getPrimaryDocument,
@@ -27,49 +21,56 @@ import {
   Plane,
   Ship,
   Truck,
+  Loader,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function JobsPage() {
+  const { jobs, loading, error, createJob, updateJob, deleteJob } = useJobs();
+  const { clients } = useClients();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('jobNumber');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [statusFilter, setStatusFilter] = useState('all');
   const [jobTypeFilter, setJobTypeFilter] = useState('all');
-  const [viewingJob, setViewingJob] = useState<LogisticsJob | null>(null);
-  const [editingJob, setEditingJob] = useState<LogisticsJob | null>(null);
-  const [deletingJob, setDeletingJob] = useState<LogisticsJob | null>(null);
+  const [viewingJob, setViewingJob] = useState<any | null>(null);
+  const [editingJob, setEditingJob] = useState<any | null>(null);
+  const [deletingJob, setDeletingJob] = useState<any | null>(null);
   const [showJobForm, setShowJobForm] = useState(false);
 
   const filteredJobs = useMemo(() => {
-    let filtered = jobsMock;
+    let filtered = jobs || [];
 
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(
-        (job) =>
-          job.jobNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.shipper.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.consignee.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (job: any) =>
+          job.jobNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.shipper?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.consignee?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           getPrimaryDocument(job)
-            .toLowerCase()
+            ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
           getJobTypeDisplayName(job.jobType)
-            .toLowerCase()
+            ?.toLowerCase()
             .includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter((job) => job.status === statusFilter);
+      filtered = filtered.filter(
+        (job: any) => job.status === statusFilter.toUpperCase()
+      );
     }
 
     // Apply job type filter
     if (jobTypeFilter !== 'all') {
-      filtered = filtered.filter((job) => job.jobType === jobTypeFilter);
+      filtered = filtered.filter((job: any) => job.jobType === jobTypeFilter);
     }
 
     // Apply sorting
@@ -109,10 +110,30 @@ export default function JobsPage() {
     });
 
     return filtered;
-  }, [searchTerm, sortBy, sortOrder, statusFilter, jobTypeFilter]);
+  }, [jobs, searchTerm, sortBy, sortOrder, statusFilter, jobTypeFilter]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Loading jobs...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AlertCircle className="w-8 h-8 text-red-600" />
+        <span className="ml-2 text-red-600">Error loading jobs: {error}</span>
+      </div>
+    );
+  }
 
   return (
     <div>
+      <FallbackBanner show={isUsingFallback()} />
+
       <div className="flex items-center justify-between mb-6">
         <h2 className="page-title">Logistics Jobs</h2>
         <button
@@ -278,15 +299,16 @@ export default function JobsPage() {
         <LogisticsJobForm
           isOpen={showJobForm}
           onClose={() => setShowJobForm(false)}
-          onSubmit={(jobData) => {
-            const newJob: LogisticsJob = {
-              id: 'j_' + Date.now(),
-              ...jobData,
-            } as LogisticsJob;
-            addJob(newJob);
-            window.location.reload();
+          onSubmit={async (jobData) => {
+            try {
+              await createJob(jobData);
+              setShowJobForm(false);
+            } catch (error) {
+              console.error('Failed to create job:', error);
+              alert('Failed to create job. Please try again.');
+            }
           }}
-          clients={clientsMock}
+          clients={clients || []}
         />
       )}
 
@@ -595,13 +617,17 @@ export default function JobsPage() {
         <LogisticsJobForm
           isOpen={!!editingJob}
           onClose={() => setEditingJob(null)}
-          onSubmit={(updates) => {
-            updateJob(editingJob.id, updates);
-            setEditingJob(null);
-            window.location.reload();
+          onSubmit={async (updates) => {
+            try {
+              await updateJob(editingJob.id, updates);
+              setEditingJob(null);
+            } catch (error) {
+              console.error('Failed to update job:', error);
+              alert('Failed to update job. Please try again.');
+            }
           }}
           initialData={editingJob}
-          clients={clientsMock}
+          clients={clients || []}
         />
       )}
 
@@ -637,10 +663,14 @@ export default function JobsPage() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  deleteJob(deletingJob.id);
-                  setDeletingJob(null);
-                  window.location.reload();
+                onClick={async () => {
+                  try {
+                    await deleteJob(deletingJob.id);
+                    setDeletingJob(null);
+                  } catch (error) {
+                    console.error('Failed to delete job:', error);
+                    alert('Failed to delete job. Please try again.');
+                  }
                 }}
                 className="px-4 py-2 rounded bg-red-600 text-white shadow hover:bg-red-700 transition"
               >

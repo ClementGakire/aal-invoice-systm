@@ -1,32 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Use the CommonJS module version for better compatibility
+// @ts-ignore
+import { prisma } from '../lib/prisma.cjs';
 
-// Mock logistics jobs data
-const mockJobs = [
-  {
-    id: '1',
-    type: 'air_freight',
-    client: 'Global Shipping Inc',
-    origin: 'New York, USA',
-    destination: 'London, UK',
-    status: 'in_transit',
-    weight: 1200,
-    value: 15000,
-    createdAt: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: '2',
-    type: 'sea_freight',
-    client: 'Maritime Solutions Ltd',
-    origin: 'Shanghai, China',
-    destination: 'Los Angeles, USA',
-    status: 'delivered',
-    weight: 25000,
-    value: 45000,
-    createdAt: '2024-01-10T08:30:00Z',
-  },
-];
-
-export default function handler(
+export default async function handler(
   request: VercelRequest,
   response: VercelResponse
 ) {
@@ -48,55 +25,83 @@ export default function handler(
   try {
     switch (request.method) {
       case 'GET':
-        const { id, type, status } = request.query;
+        const { id, type, status, clientId } = request.query;
 
-        let filteredJobs = [...mockJobs];
-
-        // Filter by ID
         if (id) {
-          const job = filteredJobs.find((j) => j.id === id);
+          const job = await prisma.logisticsJob.findUnique({
+            where: { id: String(id) },
+            include: {
+              client: true,
+              user: true,
+              invoices: true,
+              expenses: true,
+            },
+          });
+
           if (!job) {
             return response.status(404).json({ error: 'Job not found' });
           }
           return response.status(200).json(job);
         }
 
-        // Filter by type
+        // Build where clause for filters
+        const where: any = {};
+
         if (type) {
-          filteredJobs = filteredJobs.filter((j) => j.type === type);
+          where.jobType = String(type);
         }
 
-        // Filter by status
         if (status) {
-          filteredJobs = filteredJobs.filter((j) => j.status === status);
+          where.status = String(status);
         }
+
+        if (clientId) {
+          where.clientId = String(clientId);
+        }
+
+        const jobs = await prisma.logisticsJob.findMany({
+          where,
+          include: {
+            client: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            _count: {
+              select: { invoices: true, expenses: true },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
 
         return response.status(200).json({
-          jobs: filteredJobs,
-          total: filteredJobs.length,
-          filters: { type, status },
+          jobs,
+          total: jobs.length,
+          filters: { type, status, clientId },
         });
 
       case 'POST':
-        const newJob = {
-          id: String(mockJobs.length + 1),
-          ...request.body,
-          createdAt: new Date().toISOString(),
-        };
+        const { clientId: newJobClientId, ...jobData } = request.body;
 
-        // Basic validation
-        if (
-          !newJob.type ||
-          !newJob.client ||
-          !newJob.origin ||
-          !newJob.destination
-        ) {
+        if (!newJobClientId || !jobData.jobNumber || !jobData.title) {
           return response.status(400).json({
-            error: 'Missing required fields: type, client, origin, destination',
+            error: 'Missing required fields: clientId, jobNumber, title',
           });
         }
 
-        mockJobs.push(newJob);
+        const newJob = await prisma.logisticsJob.create({
+          data: {
+            ...jobData,
+            clientId: newJobClientId,
+          },
+          include: {
+            client: true,
+          },
+        });
+
         return response.status(201).json(newJob);
 
       case 'PUT':
@@ -107,13 +112,15 @@ export default function handler(
             .json({ error: 'Job ID is required for updates' });
         }
 
-        const jobIndex = mockJobs.findIndex((j) => j.id === updateId);
-        if (jobIndex === -1) {
-          return response.status(404).json({ error: 'Job not found' });
-        }
+        const updatedJob = await prisma.logisticsJob.update({
+          where: { id: String(updateId) },
+          data: request.body,
+          include: {
+            client: true,
+          },
+        });
 
-        mockJobs[jobIndex] = { ...mockJobs[jobIndex], ...request.body };
-        return response.status(200).json(mockJobs[jobIndex]);
+        return response.status(200).json(updatedJob);
 
       case 'DELETE':
         const { id: deleteId } = request.query;
@@ -123,15 +130,17 @@ export default function handler(
             .json({ error: 'Job ID is required for deletion' });
         }
 
-        const deleteIndex = mockJobs.findIndex((j) => j.id === deleteId);
-        if (deleteIndex === -1) {
-          return response.status(404).json({ error: 'Job not found' });
-        }
+        const deletedJob = await prisma.logisticsJob.delete({
+          where: { id: String(deleteId) },
+          include: {
+            client: true,
+          },
+        });
 
-        const deletedJob = mockJobs.splice(deleteIndex, 1)[0];
-        return response
-          .status(200)
-          .json({ message: 'Job deleted', job: deletedJob });
+        return response.status(200).json({
+          message: 'Job deleted',
+          job: deletedJob,
+        });
 
       default:
         response.setHeader('Allow', [
