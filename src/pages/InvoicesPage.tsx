@@ -1,14 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  invoicesMock,
-  addInvoice,
-  updateInvoice,
-  deleteInvoice,
-  jobsMock,
-  clientsMock,
-  type Invoice,
-  type LogisticsJob,
-} from '../services/mockData';
+import { useInvoices, useClients, useJobs } from '../hooks/useApi';
+import { isUsingFallback } from '../services/api';
+import FallbackBanner from '../components/FallbackBanner';
 import {
   generateInvoiceLineItems,
   generateInvoiceNumber,
@@ -27,6 +20,8 @@ import {
   Filter,
   Plus,
   FileText,
+  Loader,
+  AlertCircle,
 } from 'lucide-react';
 import PrintableInvoice from '../components/PrintableInvoice';
 
@@ -41,24 +36,38 @@ function downloadCSV(content: string, filename = 'invoices.csv') {
 }
 
 export default function InvoicesPage() {
+  const {
+    invoices,
+    loading,
+    error,
+    createInvoice,
+    updateInvoice,
+    deleteInvoice,
+  } = useInvoices();
+  const { jobs } = useJobs();
+  const { clients } = useClients();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('number');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
-  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
-  const [printingInvoice, setPrintingInvoice] = useState<Invoice | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<any | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<any | null>(null);
+  const [deletingInvoice, setDeletingInvoice] = useState<any | null>(null);
+  const [printingInvoice, setPrintingInvoice] = useState<any | null>(null);
 
   const filteredInvoices = useMemo(() => {
-    let filtered = invoicesMock;
+    let filtered = invoices || [];
 
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(
-        (invoice) =>
+        (invoice: any) =>
           invoice.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (invoice.client?.name &&
+            invoice.client.name
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
           invoice.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
           invoice.total.toString().includes(searchTerm) ||
           invoice.currency.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,11 +84,13 @@ export default function InvoicesPage() {
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter((invoice) => invoice.status === statusFilter);
+      filtered = filtered.filter(
+        (invoice: any) => invoice.status === statusFilter.toUpperCase()
+      );
     }
 
     // Apply sorting
-    filtered = [...filtered].sort((a, b) => {
+    filtered = [...filtered].sort((a: any, b: any) => {
       let aValue: any = '';
       let bValue: any = '';
 
@@ -89,8 +100,8 @@ export default function InvoicesPage() {
           bValue = b.number.toLowerCase();
           break;
         case 'client':
-          aValue = a.clientName.toLowerCase();
-          bValue = b.clientName.toLowerCase();
+          aValue = (a.client?.name || '').toLowerCase();
+          bValue = (b.client?.name || '').toLowerCase();
           break;
         case 'status':
           aValue = a.status.toLowerCase();
@@ -119,26 +130,53 @@ export default function InvoicesPage() {
     });
 
     return filtered;
-  }, [searchTerm, sortBy, sortOrder, statusFilter]);
+  }, [invoices, searchTerm, sortBy, sortOrder, statusFilter]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Loading invoices...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AlertCircle className="w-8 h-8 text-red-600" />
+        <span className="ml-2 text-red-600">
+          Error loading invoices: {error}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div>
+      <FallbackBanner show={isUsingFallback()} />
+
       <div className="flex items-center justify-between mb-6">
         <h2 className="page-title">Invoices</h2>
         <div className="flex gap-2">
-          <CreateInvoiceFromJobButton onInvoiceCreated={addInvoice} />
-          <NewInvoiceButton />
+          <CreateInvoiceFromJobButton
+            onInvoiceCreated={(newInvoice: any) => {
+              // The hook automatically updates the list, but we could add additional logic here
+              console.log('New invoice created:', newInvoice);
+            }}
+          />
+          <NewInvoiceButton onInvoiceCreated={createInvoice} />
           <button
             onClick={() => {
               const rows = [
                 'Number,Client,Job Number,Status,Total,Currency,Invoice Date',
                 ...filteredInvoices.map(
-                  (i) =>
-                    `${i.number},"${i.clientName}",${i.jobNumber || ''},${
-                      i.status
-                    },${i.total},${
-                      i.currency
-                    },${i.invoiceDate.toLocaleDateString()}`
+                  (i: any) =>
+                    `${i.number},"${i.client?.name || 'Unknown'}",${
+                      i.jobNumber || ''
+                    },${i.status},${i.total},${i.currency},${new Date(
+                      i.invoiceDate
+                    ).toLocaleDateString()}`
                 ),
               ];
               downloadCSV(rows.join('\n'));
@@ -205,9 +243,9 @@ export default function InvoicesPage() {
       </div>
 
       <div className="space-y-3">
-        {filteredInvoices.map((i) => {
+        {filteredInvoices.map((i: any) => {
           const associatedJob = i.jobId
-            ? jobsMock.find((job) => job.id === i.jobId)
+            ? jobs?.find((job: any) => job.id === i.jobId)
             : null;
           return (
             <div key={i.id} className="card flex items-center justify-between">
@@ -216,20 +254,21 @@ export default function InvoicesPage() {
                   <div className="font-medium text-lg">Invoice {i.number}</div>
                   <div
                     className={`text-xs px-2 py-1 rounded ${
-                      i.status === 'paid'
+                      i.status === 'PAID'
                         ? 'bg-green-100 text-green-700'
-                        : i.status === 'unpaid'
+                        : i.status === 'UNPAID'
                         ? 'bg-red-100 text-red-700'
                         : 'bg-gray-100 text-gray-700'
                     }`}
                   >
-                    {i.status.toUpperCase()}
+                    {i.status}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
                   <div>
-                    <span className="font-medium">Client:</span> {i.clientName}
+                    <span className="font-medium">Client:</span>{' '}
+                    {i.client?.name || 'Unknown Client'}
                   </div>
                   <div>
                     <span className="font-medium">Amount:</span> {i.currency}{' '}
@@ -237,7 +276,7 @@ export default function InvoicesPage() {
                   </div>
                   <div>
                     <span className="font-medium">Date:</span>{' '}
-                    {i.invoiceDate.toLocaleDateString()}
+                    {new Date(i.invoiceDate).toLocaleDateString()}
                   </div>
                 </div>
 
@@ -415,10 +454,14 @@ export default function InvoicesPage() {
         <EditInvoiceModal
           invoice={editingInvoice}
           onClose={() => setEditingInvoice(null)}
-          onSave={(updates) => {
-            updateInvoice(editingInvoice.id, updates);
-            setEditingInvoice(null);
-            window.location.reload();
+          onSave={async (updates) => {
+            try {
+              await updateInvoice(editingInvoice.id, updates);
+              setEditingInvoice(null);
+            } catch (error) {
+              console.error('Failed to update invoice:', error);
+              alert('Failed to update invoice. Please try again.');
+            }
           }}
         />
       )}
@@ -455,10 +498,14 @@ export default function InvoicesPage() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  deleteInvoice(deletingInvoice.id);
-                  setDeletingInvoice(null);
-                  window.location.reload();
+                onClick={async () => {
+                  try {
+                    await deleteInvoice(deletingInvoice.id);
+                    setDeletingInvoice(null);
+                  } catch (error) {
+                    console.error('Failed to delete invoice:', error);
+                    alert('Failed to delete invoice. Please try again.');
+                  }
                 }}
                 className="px-4 py-2 rounded bg-red-600 text-white shadow hover:bg-red-700 transition"
               >
@@ -485,12 +532,12 @@ function EditInvoiceModal({
   onClose,
   onSave,
 }: {
-  invoice: Invoice;
+  invoice: any;
   onClose: () => void;
-  onSave: (updates: Partial<Invoice>) => void;
+  onSave: (updates: any) => void;
 }) {
   const [number, setNumber] = useState(invoice.number);
-  const [clientName, setClientName] = useState(invoice.clientName);
+  const [clientName, setClientName] = useState(invoice.client?.name || '');
   const [status, setStatus] = useState(invoice.status);
   const [total, setTotal] = useState(invoice.total.toString());
   const [currency, setCurrency] = useState(invoice.currency);
@@ -499,7 +546,6 @@ function EditInvoiceModal({
     if (!number.trim() || !clientName.trim()) return;
     onSave({
       number,
-      clientName,
       status,
       total: Number(total) || 0,
       currency,
@@ -610,41 +656,48 @@ function EditInvoiceModal({
   );
 }
 
-function NewInvoiceButton() {
+function NewInvoiceButton({
+  onInvoiceCreated,
+}: {
+  onInvoiceCreated: (data: any) => Promise<any>;
+}) {
   const [open, setOpen] = useState(false);
   const [number, setNumber] = useState('');
   const [clientName, setClientName] = useState('');
   const [total, setTotal] = useState('');
-  const submit = () => {
+
+  const submit = async () => {
     if (!number || !clientName) return;
-    addInvoice({
-      id: 'i_' + Date.now(),
-      number,
-      clientName,
-      clientId: '',
-      jobId: undefined,
-      status: 'unpaid',
-      total: Number(total) || 0,
-      currency: 'USD',
-      invoiceDate: new Date(),
-      lineItems: [
-        {
-          id: '1',
-          description: 'Service charge',
-          basedOn: 'Service',
-          rate: Number(total) || 0,
-          currency: 'USD',
-          amount: Number(total) || 0,
-          billingAmount: Number(total) || 0,
-        },
-      ],
-      subTotal: Number(total) || 0,
-    });
-    setNumber('');
-    setClientName('');
-    setTotal('');
-    setOpen(false);
-    window.location.reload();
+
+    try {
+      await onInvoiceCreated({
+        number,
+        clientId: '', // Will need to handle client selection properly
+        status: 'UNPAID',
+        total: Number(total) || 0,
+        currency: 'USD',
+        invoiceDate: new Date().toISOString(),
+        lineItems: [
+          {
+            description: 'Service charge',
+            basedOn: 'Service',
+            rate: Number(total) || 0,
+            currency: 'USD',
+            amount: Number(total) || 0,
+            billingAmount: Number(total) || 0,
+          },
+        ],
+        subTotal: Number(total) || 0,
+      });
+
+      setNumber('');
+      setClientName('');
+      setTotal('');
+      setOpen(false);
+    } catch (error) {
+      console.error('Failed to create invoice:', error);
+      alert('Failed to create invoice. Please try again.');
+    }
   };
   return (
     <>

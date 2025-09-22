@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
+import ApiConnectionTest from './components/ApiConnectionTest';
 import Dashboard from './pages/Dashboard';
 import ClientsPage from './pages/ClientsPage';
 import JobsPage from './pages/JobsPage';
@@ -45,6 +46,7 @@ function AppContent() {
         <Route path="/portal/*" element={<ClientPortal />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ApiConnectionTest />
     </Layout>
   );
 }

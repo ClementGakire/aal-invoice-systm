@@ -1,12 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Use the CommonJS module version for better compatibility
-// @ts-ignore
-import { prisma } from '../lib/prisma.cjs';
+const { prisma } = require('../lib/prisma.cjs');
 
-export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse
-) {
+export default async function handler(request, response) {
   // Enable CORS
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader(

@@ -50,67 +50,6 @@ async function main() {
 
   console.log('✅ Created users');
 
-  // Create clients
-  const clients = await Promise.all([
-    prisma.client.upsert({
-      where: { id: 'c1' },
-      update: {},
-      create: {
-        id: 'c1',
-        name: 'Acme Corp',
-        address: '1 Main St',
-        phone: '+123456',
-        tin: 'TIN123456789',
-      },
-    }),
-    prisma.client.upsert({
-      where: { id: 'c2' },
-      update: {},
-      create: {
-        id: 'c2',
-        name: 'Beta LLC',
-        address: '9 Market St',
-        phone: '+987654',
-        tin: 'TIN987654321',
-      },
-    }),
-    prisma.client.upsert({
-      where: { id: 'c3' },
-      update: {},
-      create: {
-        id: 'c3',
-        name: 'TechStart Inc',
-        address: '456 Innovation Ave',
-        phone: '+555123',
-        tin: 'TIN555123456',
-      },
-    }),
-    prisma.client.upsert({
-      where: { id: 'c4' },
-      update: {},
-      create: {
-        id: 'c4',
-        name: 'Global Solutions',
-        address: '789 Business Blvd',
-        phone: '+555456',
-        tin: 'TIN789456123',
-      },
-    }),
-    prisma.client.upsert({
-      where: { id: 'c5' },
-      update: {},
-      create: {
-        id: 'c5',
-        name: 'Creative Agency',
-        address: '321 Design St',
-        phone: '+555789',
-        tin: 'TIN321789654',
-      },
-    }),
-  ]);
-
-  console.log('✅ Created clients');
-
   // Create suppliers
   const suppliers = await Promise.all([
     prisma.supplier.upsert({
@@ -184,77 +123,7 @@ async function main() {
   console.log('✅ Created service items');
 
   // Create logistics jobs
-  const jobs = await Promise.all([
-    prisma.logisticsJob.upsert({
-      where: { jobNumber: 'AF-2024-001' },
-      update: {},
-      create: {
-        id: 'j1',
-        jobNumber: 'AF-2024-001',
-        title: 'Electronics Shipment to Dubai',
-        clientId: 'c1',
-        status: 'DELIVERED',
-        jobType: 'AIR_FREIGHT',
-        portOfLoading: 'JFK - New York',
-        portOfDischarge: 'DXB - Dubai',
-        grossWeight: 450.5,
-        chargeableWeight: 520.0,
-        shipper: 'Acme Electronics Inc',
-        consignee: 'Dubai Tech Solutions',
-        package: '15 Boxes',
-        goodDescription: 'Computer Equipment and Electronics',
-        masterAirWaybill: 'MAWB-176-12345678',
-        houseAirWaybill: 'HAWB-176-87654321',
-        userId: 'u3',
-      },
-    }),
-    prisma.logisticsJob.upsert({
-      where: { jobNumber: 'SF-2024-002' },
-      update: {},
-      create: {
-        id: 'j2',
-        jobNumber: 'SF-2024-002',
-        title: 'Machinery Import from Germany',
-        clientId: 'c2',
-        status: 'IN_PROGRESS',
-        jobType: 'SEA_FREIGHT',
-        portOfLoading: 'HAM - Hamburg',
-        portOfDischarge: 'NYC - New York',
-        grossWeight: 12500.0,
-        chargeableWeight: 12500.0,
-        shipper: 'German Manufacturing GmbH',
-        consignee: 'Beta Industrial LLC',
-        package: '1 x 40ft Container',
-        goodDescription: 'Industrial Machinery and Parts',
-        masterBL: 'MBL-MAEU-9876543210',
-        houseBL: 'HBL-BETA-1234567890',
-        userId: 'u3',
-      },
-    }),
-    prisma.logisticsJob.upsert({
-      where: { jobNumber: 'RF-2024-003' },
-      update: {},
-      create: {
-        id: 'j3',
-        jobNumber: 'RF-2024-003',
-        title: 'Local Delivery to Warehouse',
-        clientId: 'c3',
-        status: 'OPEN',
-        jobType: 'ROAD_FREIGHT',
-        portOfLoading: 'Distribution Center A',
-        portOfDischarge: 'TechStart Warehouse',
-        grossWeight: 2800.0,
-        chargeableWeight: 2800.0,
-        shipper: 'Central Distribution Hub',
-        consignee: 'TechStart Inc',
-        package: '50 Pallets',
-        goodDescription: 'Office Equipment and Supplies',
-        plateNumber: 'TRK-456-ABC',
-        containerNumber: 'CONT-789-XYZ',
-        userId: 'u3',
-      },
-    }),
-  ]);
+
 
   console.log('✅ Created logistics jobs');
 

@@ -148,43 +148,7 @@ function save<T>(key: string, val: T) {
   } catch (e) {}
 }
 
-export let clientsMock: Client[] = load('clients', [
-  {
-    id: 'c1',
-    name: 'Acme Corp',
-    address: '1 Main St',
-    phone: '+123456',
-    tin: 'TIN123456789',
-  },
-  {
-    id: 'c2',
-    name: 'Beta LLC',
-    address: '9 Market St',
-    phone: '+987654',
-    tin: 'TIN987654321',
-  },
-  {
-    id: 'c3',
-    name: 'TechStart Inc',
-    address: '456 Innovation Ave',
-    phone: '+555123',
-    tin: 'TIN555123456',
-  },
-  {
-    id: 'c4',
-    name: 'Global Solutions',
-    address: '789 Business Blvd',
-    phone: '+555456',
-    tin: 'TIN789456123',
-  },
-  {
-    id: 'c5',
-    name: 'Creative Agency',
-    address: '321 Design St',
-    phone: '+555789',
-    tin: 'TIN321789654',
-  },
-]);
+export let clientsMock: Client[] = load('clients', []);
 
 export function addClient(c: Client) {
   clientsMock = [c, ...clientsMock];
@@ -219,29 +183,6 @@ export const servicesMock: ServiceItem[] = load('services', [
 ]);
 
 export const jobsMock: LogisticsJob[] = load('jobs', [
-  {
-    id: 'j1',
-    jobNumber: 'AF-2024-001',
-    title: 'Electronics Shipment to Dubai',
-    clientId: 'c1',
-    clientName: 'Acme Corp',
-    status: 'delivered',
-    jobType: JobType.AIR_FREIGHT,
-    portOfLoading: 'JFK - New York',
-    portOfDischarge: 'DXB - Dubai',
-    grossWeight: 450.5,
-    chargeableWeight: 520.0,
-    shipper: 'Acme Electronics Inc',
-    consignee: 'Dubai Tech Solutions',
-    package: '15 Boxes',
-    goodDescription: 'Computer Equipment and Electronics',
-    awb: {
-      masterAirWaybill: 'MAWB-176-12345678',
-      houseAirWaybill: 'HAWB-176-87654321',
-    },
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-20'),
-  },
   {
     id: 'j2',
     jobNumber: 'SF-2024-002',
@@ -286,28 +227,7 @@ export const jobsMock: LogisticsJob[] = load('jobs', [
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-02-15'),
   },
-  {
-    id: 'j4',
-    jobNumber: 'AF-2024-004',
-    title: 'Pharmaceutical Export to London',
-    clientId: 'c4',
-    clientName: 'Global Solutions',
-    status: 'delivered',
-    jobType: JobType.AIR_FREIGHT,
-    portOfLoading: 'MIA - Miami',
-    portOfDischarge: 'LHR - London Heathrow',
-    grossWeight: 180.2,
-    chargeableWeight: 250.0,
-    shipper: 'Global Pharma Solutions',
-    consignee: 'London Medical Supplies Ltd',
-    package: '8 Temperature Controlled Boxes',
-    goodDescription: 'Pharmaceutical Products - Temperature Sensitive',
-    awb: {
-      masterAirWaybill: 'MAWB-020-11223344',
-    },
-    createdAt: new Date('2024-02-20'),
-    updatedAt: new Date('2024-02-25'),
-  },
+
   {
     id: 'j5',
     jobNumber: 'SF-2024-005',
