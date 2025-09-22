@@ -1,6 +1,5 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "npm ci && prisma generate",
   "rewrites": [
     {
       "source": "/api/(.*)",
