@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm run vercel-build",
+  "buildCommand": "prisma generate && npm run build",
+  "installCommand": "npm ci",
   "rewrites": [
     {
       "source": "/api/(.*)",
