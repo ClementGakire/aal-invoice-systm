@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// Use the CommonJS module version for better compatibility
 // @ts-ignore
 import { prisma } from '../lib/prisma.cjs';
 
