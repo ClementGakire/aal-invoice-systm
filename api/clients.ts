@@ -23,11 +23,15 @@ export default async function handler(
   }
 
   try {
+    console.log('📝 API Request:', request.method, request.url);
+    console.log('🔗 Database URL present:', !!process.env.DATABASE_URL);
+    
     switch (request.method) {
       case 'GET':
         const { id } = request.query;
 
         if (id) {
+          console.log('🔍 Finding client with ID:', id);
           const client = await prisma.client.findUnique({
             where: { id: String(id) },
             include: {
@@ -51,6 +55,7 @@ export default async function handler(
           return response.status(200).json(client);
         }
 
+        console.log('📋 Getting all clients...');
         const clients = await prisma.client.findMany({
           include: {
             _count: {
@@ -61,7 +66,8 @@ export default async function handler(
             name: 'asc',
           },
         });
-
+        
+        console.log('✅ Found clients:', clients.length);
         return response.status(200).json({
           clients,
           total: clients.length,
@@ -160,10 +166,17 @@ export default async function handler(
           .json({ error: `Method ${request.method} not allowed` });
     }
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('🚨 API Error:', error);
+    console.error('🚨 Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
+    
     return response.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
     });
   }
 }
