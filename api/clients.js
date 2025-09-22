@@ -1,8 +1,13 @@
-// Cache buster v2.0 - Working ES Module API
-import { PrismaClient } from '@prisma/client';
+// Dynamic import approach to avoid ES module compilation issues
+let prisma;
 
-// Initialize Prisma client
-const prisma = new PrismaClient();
+async function getPrisma() {
+  if (!prisma) {
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 export default async function handler(request, response) {
   // Enable CORS
@@ -24,14 +29,16 @@ export default async function handler(request, response) {
   try {
     console.log('📝 API Request:', request.method, request.url);
     console.log('🔗 Database URL present:', !!process.env.DATABASE_URL);
-
+    
+    const db = await getPrisma();
+    
     switch (request.method) {
       case 'GET':
         const { id } = request.query;
 
         if (id) {
           console.log('🔍 Finding client with ID:', id);
-          const client = await prisma.client.findUnique({
+          const client = await db.client.findUnique({
             where: { id: parseInt(id) },
             include: {
               jobs: {
@@ -50,7 +57,7 @@ export default async function handler(request, response) {
         }
 
         console.log('📋 Getting all clients...');
-        const clients = await prisma.client.findMany({
+        const clients = await db.client.findMany({
           include: {
             _count: {
               select: { jobs: true, invoices: true },
@@ -60,7 +67,7 @@ export default async function handler(request, response) {
             name: 'asc',
           },
         });
-
+        
         console.log('✅ Found clients:', clients.length);
         return response.status(200).json({
           clients,
@@ -77,7 +84,7 @@ export default async function handler(request, response) {
           });
         }
 
-        const newClient = await prisma.client.create({
+        const newClient = await db.client.create({
           data: {
             name,
             email,
@@ -105,7 +112,7 @@ export default async function handler(request, response) {
           return response.status(400).json({ error: 'Client ID is required' });
         }
 
-        const updatedClient = await prisma.client.update({
+        const updatedClient = await db.client.update({
           where: { id: parseInt(updateId) },
           data: updateData,
           include: {
@@ -127,7 +134,7 @@ export default async function handler(request, response) {
           return response.status(400).json({ error: 'Client ID is required' });
         }
 
-        const deletedClient = await prisma.client.delete({
+        const deletedClient = await db.client.delete({
           where: { id: parseInt(deleteId) },
         });
 
@@ -153,13 +160,13 @@ export default async function handler(request, response) {
     console.error('🚨 Error details:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
     });
-
+    
     return response.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
   }
-}
+};
