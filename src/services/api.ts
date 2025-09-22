@@ -16,7 +16,7 @@ import {
 
 const API_BASE_URL =
   process.env.NODE_ENV === 'production'
-    ? '' // Will use relative URLs in production
+    ? 'https://aal-front-end.vercel.app' // Production Vercel URL
     : 'http://localhost:3000'; // For local development API server
 
 // Flag to track if API is available
