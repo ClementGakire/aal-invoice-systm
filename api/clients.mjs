@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 // Initialize Prisma client
 const prisma = new PrismaClient();
 
-export default async function handler(request: any, response: any) {
+export default async function handler(request, response) {
   // Enable CORS
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader(
@@ -23,7 +23,7 @@ export default async function handler(request: any, response: any) {
   try {
     console.log('📝 API Request:', request.method, request.url);
     console.log('🔗 Database URL present:', !!process.env.DATABASE_URL);
-
+    
     switch (request.method) {
       case 'GET':
         const { id } = request.query;
@@ -31,15 +31,10 @@ export default async function handler(request: any, response: any) {
         if (id) {
           console.log('🔍 Finding client with ID:', id);
           const client = await prisma.client.findUnique({
-            where: { id: String(id) },
+            where: { id: parseInt(id) },
             include: {
               jobs: {
-                select: {
-                  id: true,
-                  jobNumber: true,
-                  title: true,
-                  status: true,
-                },
+                select: { id: true, title: true, status: true },
               },
               invoices: {
                 select: { id: true, number: true, status: true, total: true },
@@ -64,86 +59,75 @@ export default async function handler(request: any, response: any) {
             name: 'asc',
           },
         });
-
+        
         console.log('✅ Found clients:', clients.length);
         return response.status(200).json({
           clients,
           total: clients.length,
+          success: true,
         });
 
       case 'POST':
-        // Log the request body to debug
-        console.log('POST /api/clients request body:', request.body);
+        const { name, email, phone, address, contactPerson } = request.body;
 
-        // Handle both string and parsed JSON
-        let requestData = request.body;
-
-        // If the body is a string, try to parse it as JSON
-        if (typeof request.body === 'string') {
-          try {
-            requestData = JSON.parse(request.body);
-            console.log('Parsed request body:', requestData);
-          } catch (e) {
-            console.error('Failed to parse request body as JSON:', e);
-            return response.status(400).json({
-              error: 'Invalid JSON in request body',
-            });
-          }
-        }
-
-        const { name, address, phone, tin } = requestData;
-
-        if (!name) {
+        if (!name || !email) {
           return response.status(400).json({
-            error: 'Missing required field: name',
+            error: 'Missing required fields: name and email are required',
           });
         }
 
-        try {
-          const newClient = await prisma.client.create({
-            data: {
-              name,
-              address: address || null,
-              phone: phone || null,
-              tin: tin || null,
+        const newClient = await prisma.client.create({
+          data: {
+            name,
+            email,
+            phone: phone || null,
+            address: address || null,
+            contactPerson: contactPerson || null,
+          },
+          include: {
+            _count: {
+              select: { jobs: true, invoices: true },
             },
-          });
+          },
+        });
 
-          console.log('Created new client:', newClient);
-          return response.status(201).json(newClient);
-        } catch (e) {
-          console.error('Error creating client in database:', e);
-          return response.status(500).json({
-            error: 'Database error',
-            message: e instanceof Error ? e.message : 'Unknown error',
-          });
-        }
+        return response.status(201).json({
+          message: 'Client created successfully',
+          client: newClient,
+        });
 
       case 'PUT':
-        const { id: updateId } = request.query;
+        const updateId = request.query.id;
+        const updateData = request.body;
+
         if (!updateId) {
-          return response
-            .status(400)
-            .json({ error: 'Client ID is required for updates' });
+          return response.status(400).json({ error: 'Client ID is required' });
         }
 
         const updatedClient = await prisma.client.update({
-          where: { id: String(updateId) },
-          data: request.body,
+          where: { id: parseInt(updateId) },
+          data: updateData,
+          include: {
+            _count: {
+              select: { jobs: true, invoices: true },
+            },
+          },
         });
 
-        return response.status(200).json(updatedClient);
+        return response.status(200).json({
+          message: 'Client updated successfully',
+          client: updatedClient,
+        });
 
       case 'DELETE':
-        const { id: deleteId } = request.query;
+        const deleteId = request.query.id;
+
         if (!deleteId) {
-          return response
-            .status(400)
-            .json({ error: 'Client ID is required for deletion' });
+          return response.status(400).json({ error: 'Client ID is required' });
         }
 
         const deletedClient = await prisma.client.delete({
-          where: { id: String(deleteId) },
+          where: { id: parseInt(deleteId) },
         });
 
         return response.status(200).json({
@@ -168,13 +152,13 @@ export default async function handler(request: any, response: any) {
     console.error('🚨 Error details:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
     });
-
+    
     return response.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
   }
 }
