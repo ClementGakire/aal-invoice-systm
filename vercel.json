@@ -14,7 +14,6 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": "vite",
-  "nodeVersion": "18.x",
   "rewrites": [
     {
       "source": "/api/(.*)",
