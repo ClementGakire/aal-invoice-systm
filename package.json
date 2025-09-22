@@ -1,14 +1,16 @@
 {
   "name": "aal-invoice-frontend",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "private": true,
   "engines": {
     "node": "22.x"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "prisma generate && vite build",
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && vite build",
     "preview": "vite preview",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

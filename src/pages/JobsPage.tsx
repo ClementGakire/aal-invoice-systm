@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useJobs, useClients } from '../hooks/useApi';
-import { isUsingFallback } from '../services/api';
+import { isUsingFallback, api } from '../services/api';
 import FallbackBanner from '../components/FallbackBanner';
 import {
   getJobTypeDisplayName,
@@ -36,6 +36,22 @@ export default function JobsPage() {
   const [jobTypeFilter, setJobTypeFilter] = useState('all');
   const [viewingJob, setViewingJob] = useState<any | null>(null);
   const [editingJob, setEditingJob] = useState<any | null>(null);
+  const [loadingJobDetails, setLoadingJobDetails] = useState(false);
+
+  const handleEditJob = async (job: any) => {
+    try {
+      setLoadingJobDetails(true);
+      // Fetch full job details for editing
+      const fullJobDetails = await api.jobs.getById(job.id);
+      setEditingJob(fullJobDetails);
+    } catch (error) {
+      console.error('Failed to fetch job details for editing:', error);
+      // Fallback to using the job from the list
+      setEditingJob(job);
+    } finally {
+      setLoadingJobDetails(false);
+    }
+  };
   const [deletingJob, setDeletingJob] = useState<any | null>(null);
   const [showJobForm, setShowJobForm] = useState(false);
 
@@ -270,8 +286,9 @@ export default function JobsPage() {
                   View
                 </button>
                 <button
-                  onClick={() => setEditingJob(j)}
-                  className="px-3 py-1 border rounded text-sm hover:bg-blue-50 text-blue-600 transition flex items-center gap-1"
+                  onClick={() => handleEditJob(j)}
+                  disabled={loadingJobDetails}
+                  className="px-3 py-1 border rounded text-sm hover:bg-blue-50 text-blue-600 transition flex items-center gap-1 disabled:opacity-50"
                 >
                   <Edit2 className="w-3 h-3" />
                   Edit

@@ -182,76 +182,7 @@ export const servicesMock: ServiceItem[] = load('services', [
   { id: 'sv5', name: 'Training', price: 200, currency: 'USD', vat: false },
 ]);
 
-export const jobsMock: LogisticsJob[] = load('jobs', [
-  {
-    id: 'j2',
-    jobNumber: 'SF-2024-002',
-    title: 'Machinery Import from Germany',
-    clientId: 'c2',
-    clientName: 'Beta LLC',
-    status: 'in-progress',
-    jobType: JobType.SEA_FREIGHT,
-    portOfLoading: 'HAM - Hamburg',
-    portOfDischarge: 'NYC - New York',
-    grossWeight: 12500.0,
-    chargeableWeight: 12500.0,
-    shipper: 'German Manufacturing GmbH',
-    consignee: 'Beta Industrial LLC',
-    package: '1 x 40ft Container',
-    goodDescription: 'Industrial Machinery and Parts',
-    billOfLading: {
-      masterBL: 'MBL-MAEU-9876543210',
-      houseBL: 'HBL-BETA-1234567890',
-    },
-    createdAt: new Date('2024-02-01'),
-    updatedAt: new Date('2024-02-10'),
-  },
-  {
-    id: 'j3',
-    jobNumber: 'RF-2024-003',
-    title: 'Local Delivery to Warehouse',
-    clientId: 'c3',
-    clientName: 'TechStart Inc',
-    status: 'open',
-    jobType: JobType.ROAD_FREIGHT,
-    portOfLoading: 'Distribution Center A',
-    portOfDischarge: 'TechStart Warehouse',
-    grossWeight: 2800.0,
-    chargeableWeight: 2800.0,
-    shipper: 'Central Distribution Hub',
-    consignee: 'TechStart Inc',
-    package: '50 Pallets',
-    goodDescription: 'Office Equipment and Supplies',
-    plateNumber: 'TRK-456-ABC',
-    containerNumber: 'CONT-789-XYZ',
-    createdAt: new Date('2024-02-15'),
-    updatedAt: new Date('2024-02-15'),
-  },
-
-  {
-    id: 'j5',
-    jobNumber: 'SF-2024-005',
-    title: 'Textile Import from India',
-    clientId: 'c5',
-    clientName: 'Creative Agency',
-    status: 'in-progress',
-    jobType: JobType.SEA_FREIGHT,
-    portOfLoading: 'JNPT - Mumbai',
-    portOfDischarge: 'LAX - Los Angeles',
-    grossWeight: 8200.0,
-    chargeableWeight: 8200.0,
-    shipper: 'Mumbai Textiles Export',
-    consignee: 'Creative Fashion Agency',
-    package: '2 x 20ft Containers',
-    goodDescription: 'Textile Materials and Garments',
-    billOfLading: {
-      masterBL: 'MBL-COSCO-5566778899',
-      houseBL: 'HBL-CREATIVE-9988776655',
-    },
-    createdAt: new Date('2024-03-01'),
-    updatedAt: new Date('2024-03-05'),
-  },
-]);
+export const jobsMock: LogisticsJob[] = load('jobs', []);
 
 export let invoicesMock: Invoice[] = load('invoices', [
   {
