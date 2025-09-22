@@ -23,7 +23,7 @@ const API_BASE_URL =
 let apiAvailable = true;
 
 // Set to true to always use real API regardless of availability tests
-let FORCE_REAL_API = true; // Re-enabled for testing with development server
+let FORCE_REAL_API = true; // Always use real API, no fallback to mock data
 
 // Function to check if we're using fallback mode
 export function isUsingFallback(): boolean {
