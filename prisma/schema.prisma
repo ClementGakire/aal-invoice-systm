@@ -25,13 +25,17 @@ model User {
 }
 
 model Client {
-  id       String         @id @default(cuid())
-  name     String
-  address  String?
-  phone    String?
-  tin      String?
-  invoices Invoice[]
-  jobs     LogisticsJob[]
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  phone         String?
+  address       String?
+  contactPerson String?
+  tin           String?
+  invoices      Invoice[]
+  jobs          LogisticsJob[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@map("clients")
 }
