@@ -10,6 +10,11 @@
       "runtime": "@vercel/node@3.0.0"
     }
   },
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "nodeVersion": "18.x",
   "rewrites": [
     {
       "source": "/api/(.*)",
