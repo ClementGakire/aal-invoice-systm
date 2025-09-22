@@ -1,13 +1,9 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
 
-// Initialize Prisma client directly in the API file
+// Initialize Prisma client
 const prisma = new PrismaClient();
 
-export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse
-) {
+export default async function handler(request: any, response: any) {
   // Enable CORS
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader(
