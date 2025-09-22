@@ -90,7 +90,9 @@ app.all('/api/clients', async (req, res) => {
       case 'PUT':
         const { id: updateId } = req.query;
         if (!updateId) {
-          return res.status(400).json({ error: 'Client ID is required for updates' });
+          return res
+            .status(400)
+            .json({ error: 'Client ID is required for updates' });
         }
 
         const updatedClient = await prisma.client.update({
@@ -103,7 +105,9 @@ app.all('/api/clients', async (req, res) => {
       case 'DELETE':
         const { id: deleteId } = req.query;
         if (!deleteId) {
-          return res.status(400).json({ error: 'Client ID is required for deletion' });
+          return res
+            .status(400)
+            .json({ error: 'Client ID is required for deletion' });
         }
 
         const deletedClient = await prisma.client.delete({

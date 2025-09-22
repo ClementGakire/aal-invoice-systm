@@ -473,7 +473,11 @@ export const clientsApi = {
         '/clients'
       );
 
-      console.log(`✅ Successfully fetched ${response?.clients?.length || 0} clients from database`);
+      console.log(
+        `✅ Successfully fetched ${
+          response?.clients?.length || 0
+        } clients from database`
+      );
 
       // The API response should have the correct structure: { clients: [], total: number }
       if (response && Array.isArray(response.clients)) {
@@ -484,12 +488,16 @@ export const clientsApi = {
       throw new Error('Invalid response format from API');
     } catch (error) {
       console.error('❌ Failed to fetch clients from database:', error);
-      
+
       if (FORCE_REAL_API) {
         // When forcing real API, don't fall back to mock data - throw the error
-        throw new Error(`API Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `API Error: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
       }
-      
+
       console.warn('⚠️ Falling back to mock data for clients');
       return { clients: clientsMock, total: clientsMock.length };
     }
@@ -501,7 +509,10 @@ export const clientsApi = {
       console.log(`🔍 Fetching client ${id} from database...`);
       const response = await apiCall<any>(`/clients?id=${id}`);
 
-      console.log('✅ Successfully fetched client by ID:', response?.name || 'Unknown');
+      console.log(
+        '✅ Successfully fetched client by ID:',
+        response?.name || 'Unknown'
+      );
 
       // The API should return the client object directly
       if (response && response.id) {
@@ -511,11 +522,15 @@ export const clientsApi = {
       throw new Error('Client not found or invalid response format');
     } catch (error) {
       console.error('❌ Failed to fetch client by ID from database:', error);
-      
+
       if (FORCE_REAL_API) {
-        throw new Error(`Failed to get client: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to get client: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
       }
-      
+
       console.warn('⚠️ Falling back to mock data for client by ID');
       const client = clientsMock.find((c) => c.id === id);
       if (!client) throw new Error('Client not found');
@@ -526,21 +541,28 @@ export const clientsApi = {
   // Create new client
   create: async (clientData: any) => {
     try {
-      console.log('📝 Creating new client in database:', clientData.name || 'Unknown name');
+      console.log(
+        '📝 Creating new client in database:',
+        clientData.name || 'Unknown name'
+      );
       const result = await apiCall<any>('/clients', {
         method: 'POST',
         body: JSON.stringify(clientData),
       });
-      
+
       console.log('✅ Successfully created client:', result?.name || 'Unknown');
       return result;
     } catch (error) {
       console.error('❌ Failed to create client in database:', error);
-      
+
       if (FORCE_REAL_API) {
-        throw new Error(`Failed to create client: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to create client: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
       }
-      
+
       console.warn('⚠️ Creating client in mock data only (fallback)');
       const newClient = { ...clientData, id: generateId() };
       addClientMock(newClient);
@@ -556,16 +578,20 @@ export const clientsApi = {
         method: 'PUT',
         body: JSON.stringify(clientData),
       });
-      
+
       console.log('✅ Successfully updated client:', result?.name || 'Unknown');
       return result;
     } catch (error) {
       console.error('❌ Failed to update client in database:', error);
-      
+
       if (FORCE_REAL_API) {
-        throw new Error(`Failed to update client: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to update client: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
       }
-      
+
       console.warn('⚠️ Updating client in mock data only (fallback)');
       updateClientMock(id, clientData);
       return { ...clientData, id };
@@ -582,16 +608,23 @@ export const clientsApi = {
           method: 'DELETE',
         }
       );
-      
-      console.log('✅ Successfully deleted client:', result?.client?.name || id);
+
+      console.log(
+        '✅ Successfully deleted client:',
+        result?.client?.name || id
+      );
       return result;
     } catch (error) {
       console.error('❌ Failed to delete client from database:', error);
-      
+
       if (FORCE_REAL_API) {
-        throw new Error(`Failed to delete client: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to delete client: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
       }
-      
+
       console.warn('⚠️ Deleting client from mock data only (fallback)');
       const client = clientsMock.find((c) => c.id === id);
       if (client) {
