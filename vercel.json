@@ -1,8 +1,5 @@
 {
   "functions": {
-    "api/clients.js": {
-      "runtime": "@vercel/node@3.0.0"
-    },
     "api/clients.ts": {
       "runtime": "@vercel/node@3.0.0"
     },
