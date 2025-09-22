@@ -1,3 +1,4 @@
+// Cache buster v2.0 - Working ES Module API
 import { PrismaClient } from '@prisma/client';
 
 // Initialize Prisma client

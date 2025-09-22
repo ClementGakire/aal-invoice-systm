@@ -1,25 +1,13 @@
 {
   "functions": {
-    "functions/**/*.{mjs,ts}": {
+    "api/clients.mjs": {
       "memory": 1024
     }
   },
   "rewrites": [
     {
-      "source": "/api/clients",
-      "destination": "/functions/clients"
-    },
-    {
-      "source": "/api/invoices",
-      "destination": "/functions/invoices"
-    },
-    {
-      "source": "/api/jobs",
-      "destination": "/functions/jobs"
-    },
-    {
       "source": "/api/(.*)",
-      "destination": "/functions/$1"
+      "destination": "/api/$1"
     }
   ],
   "headers": [
