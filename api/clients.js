@@ -1,13 +1,5 @@
-// Dynamic import approach to avoid ES module compilation issues
-let prisma;
-
-async function getPrisma() {
-  if (!prisma) {
-    const { PrismaClient } = await import('@prisma/client');
-    prisma = new PrismaClient();
-  }
-  return prisma;
-}
+// Import edge-compatible Prisma client
+import prisma from '../lib/prisma-edge.js'
 
 export default async function handler(request, response) {
   // Enable CORS
@@ -30,15 +22,13 @@ export default async function handler(request, response) {
     console.log('📝 API Request:', request.method, request.url);
     console.log('🔗 Database URL present:', !!process.env.DATABASE_URL);
     
-    const db = await getPrisma();
-    
     switch (request.method) {
       case 'GET':
         const { id } = request.query;
 
         if (id) {
           console.log('🔍 Finding client with ID:', id);
-          const client = await db.client.findUnique({
+          const client = await prisma.client.findUnique({
             where: { id: parseInt(id) },
             include: {
               jobs: {
@@ -57,7 +47,7 @@ export default async function handler(request, response) {
         }
 
         console.log('📋 Getting all clients...');
-        const clients = await db.client.findMany({
+        const clients = await prisma.client.findMany({
           include: {
             _count: {
               select: { jobs: true, invoices: true },
@@ -84,7 +74,7 @@ export default async function handler(request, response) {
           });
         }
 
-        const newClient = await db.client.create({
+        const newClient = await prisma.client.create({
           data: {
             name,
             email: email || null,
@@ -112,7 +102,7 @@ export default async function handler(request, response) {
           return response.status(400).json({ error: 'Client ID is required' });
         }
 
-        const updatedClient = await db.client.update({
+        const updatedClient = await prisma.client.update({
           where: { id: parseInt(updateId) },
           data: updateData,
           include: {
@@ -134,7 +124,7 @@ export default async function handler(request, response) {
           return response.status(400).json({ error: 'Client ID is required' });
         }
 
-        const deletedClient = await db.client.delete({
+        const deletedClient = await prisma.client.delete({
           where: { id: parseInt(deleteId) },
         });
 

@@ -8,9 +8,9 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npx prisma generate --no-engine && vite build",
-    "postinstall": "npx prisma generate --no-engine",
-    "vercel-build": "npx prisma generate --no-engine && vite build",
+    "build": "npx prisma generate && vite build",
+    "postinstall": "npx prisma generate",
+    "vercel-build": "npx prisma generate && vite build",
     "preview": "vite preview",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
