@@ -531,7 +531,9 @@ export function deleteJob(id: string) {
 }
 
 export function addExpense(e: Expense) {
-  console.warn('⚠️ DEPRECATED: addExpense() is deprecated. Use database operations via api/expenses.js instead.');
+  console.warn(
+    '⚠️ DEPRECATED: addExpense() is deprecated. Use database operations via api/expenses.js instead.'
+  );
   const arr = [e, ...((exports as any).expensesMock || [])];
   try {
     localStorage.setItem(LS_PREFIX + 'expenses', JSON.stringify(arr));
@@ -540,7 +542,9 @@ export function addExpense(e: Expense) {
 }
 
 export function updateExpense(id: string, updates: Partial<Expense>) {
-  console.warn('⚠️ DEPRECATED: updateExpense() is deprecated. Use database operations via api/expenses.js instead.');
+  console.warn(
+    '⚠️ DEPRECATED: updateExpense() is deprecated. Use database operations via api/expenses.js instead.'
+  );
   const current = (exports as any).expensesMock || [];
   const updated = current.map((e: Expense) =>
     e.id === id ? { ...e, ...updates } : e
@@ -552,7 +556,9 @@ export function updateExpense(id: string, updates: Partial<Expense>) {
 }
 
 export function deleteExpense(id: string) {
-  console.warn('⚠️ DEPRECATED: deleteExpense() is deprecated. Use database operations via api/expenses.js instead.');
+  console.warn(
+    '⚠️ DEPRECATED: deleteExpense() is deprecated. Use database operations via api/expenses.js instead.'
+  );
   const current = (exports as any).expensesMock || [];
   const filtered = current.filter((e: Expense) => e.id !== id);
   try {

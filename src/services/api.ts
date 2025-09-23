@@ -752,7 +752,10 @@ export const expensesApi = {
 
       // Extract the expense object from the API response
       const expense = result?.expense || result;
-      console.log('✅ Successfully created expense:', expense?.title || 'Unknown');
+      console.log(
+        '✅ Successfully created expense:',
+        expense?.title || 'Unknown'
+      );
       return expense;
     } catch (error) {
       console.error('❌ Failed to create expense in database:', error);
@@ -783,7 +786,10 @@ export const expensesApi = {
 
       // Extract the expense object from the API response
       const expense = result?.expense || result;
-      console.log('✅ Successfully updated expense:', expense?.title || 'Unknown');
+      console.log(
+        '✅ Successfully updated expense:',
+        expense?.title || 'Unknown'
+      );
       return expense;
     } catch (error) {
       console.error('❌ Failed to update expense in database:', error);

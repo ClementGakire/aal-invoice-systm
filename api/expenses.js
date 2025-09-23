@@ -69,7 +69,15 @@ export default async function handler(request, response) {
         });
 
       case 'POST':
-        const { title, amount, currency, jobNumber, jobId, supplierId, supplierName } = request.body;
+        const {
+          title,
+          amount,
+          currency,
+          jobNumber,
+          jobId,
+          supplierId,
+          supplierName,
+        } = request.body;
 
         if (!title || amount === undefined) {
           return response.status(400).json({
@@ -117,7 +125,7 @@ export default async function handler(request, response) {
         if (dataToUpdate.amount !== undefined) {
           dataToUpdate.amount = parseFloat(dataToUpdate.amount);
         }
-        
+
         // Handle optional fields - set to null if empty string
         if (dataToUpdate.jobNumber === '') dataToUpdate.jobNumber = null;
         if (dataToUpdate.jobId === '') dataToUpdate.jobId = null;
