@@ -1,6 +1,29 @@
 import React from 'react';
 
-// Generate sample data for charts
+interface DashboardData {
+  metrics: {
+    totalClients: number;
+    totalInvoices: number;
+    openInvoices: number;
+    activeJobs: number;
+    totalRevenue: number;
+    totalExpenses: number;
+    netRevenue: number;
+  };
+  charts: {
+    salesLast7Days: any[];
+    salesLast6Months: any[];
+    expensesByCategory: any[];
+  };
+  generatedAt: string;
+  success: boolean;
+}
+
+interface ChartsProps {
+  dashboardData?: DashboardData | null;
+}
+
+// Generate sample data for charts when no real data is available
 function generateSalesData() {
   const last7Days: Array<{ date: string; value: number }> = [];
   const last6Months: Array<{ month: string; value: number }> = [];
@@ -20,14 +43,7 @@ function generateSalesData() {
   }
 
   // Last 6 months data
-  const months = [
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-  ];
+  const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
   months.forEach((month) => {
     const value = Math.random() * 8000000 + 6000000; // 6M to 14M range
     last6Months.push({ month, value });
@@ -275,16 +291,89 @@ export function PieChart({ data, title }: { data: any[]; title: string }) {
   );
 }
 
-export function Charts() {
-  const { last7Days, last6Months } = generateSalesData();
-  const expensesData = generateExpensesData();
+export function Charts({ dashboardData }: ChartsProps) {
+  // Don't show charts until real data is available
+  if (!dashboardData || !dashboardData.success) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        {/* Loading placeholders for charts */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">Sales - Last 7 Days</h3>
+          <div className="flex justify-center items-center h-48">
+            <div className="animate-pulse text-gray-400">
+              Loading chart data...
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">Sales - Last 6 Months</h3>
+          <div className="flex justify-center items-center h-48">
+            <div className="animate-pulse text-gray-400">
+              Loading chart data...
+            </div>
+          </div>
+        </div>
+        <div className="lg:col-span-1">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4">Expenses by Category</h3>
+            <div className="flex justify-center items-center h-48">
+              <div className="animate-pulse text-gray-400">
+                Loading chart data...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Use real data with fallback to generated data only if real data is empty
+  const getChartData = () => {
+    return {
+      last7Days:
+        dashboardData.charts.salesLast7Days.length > 0
+          ? dashboardData.charts.salesLast7Days
+          : generateSalesData().last7Days,
+      last6Months:
+        dashboardData.charts.salesLast6Months.length > 0
+          ? dashboardData.charts.salesLast6Months
+          : generateSalesData().last6Months,
+      expensesData:
+        dashboardData.charts.expensesByCategory.length > 0
+          ? dashboardData.charts.expensesByCategory
+          : generateExpensesData(),
+    };
+  };
+
+  const { last7Days, last6Months, expensesData } = getChartData();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-      <LineChart data={last7Days} title="Sales - Last 7 Days" />
-      <BarChart data={last6Months} title="Sales - Last 6 Months" />
+      <LineChart
+        data={last7Days}
+        title={`Sales - Last 7 Days ${
+          dashboardData.charts.salesLast7Days.length > 0
+            ? '(Real Data)'
+            : '(Sample Data)'
+        }`}
+      />
+      <BarChart
+        data={last6Months}
+        title={`Sales - Last 6 Months ${
+          dashboardData.charts.salesLast6Months.length > 0
+            ? '(Real Data)'
+            : '(Sample Data)'
+        }`}
+      />
       <div className="lg:col-span-1">
-        <PieChart data={expensesData} title="Expenses by Category" />
+        <PieChart
+          data={expensesData}
+          title={`Expenses by Category ${
+            dashboardData.charts.expensesByCategory.length > 0
+              ? '(Real Data)'
+              : '(Sample Data)'
+          }`}
+        />
       </div>
     </div>
   );
