@@ -11,6 +11,7 @@ export function useApiData<T>(
       jobs?: T[];
       clients?: T[];
       services?: T[];
+      expenses?: T[];
       total: number;
     }>;
   },
@@ -34,6 +35,7 @@ export function useApiData<T>(
         result.jobs ||
         result.clients ||
         result.services ||
+        result.expenses ||
         [];
       setData(items);
     } catch (err) {
@@ -291,6 +293,60 @@ export function useServices() {
   };
 }
 
+// Expenses hook
+export function useExpenses() {
+  const {
+    data: expenses,
+    loading,
+    error,
+    refetch,
+    setData: setExpenses,
+  } = useApiData(api.expenses);
+
+  const createExpense = async (expenseData: any) => {
+    try {
+      const newExpense = await api.expenses.create(expenseData);
+      setExpenses((prev) => [newExpense, ...prev]);
+      return newExpense;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updateExpense = async (id: string, expenseData: any) => {
+    try {
+      const updatedExpense = await api.expenses.update(id, expenseData);
+      setExpenses((prev: any[]) =>
+        prev.map((expense: any) => (expense.id === id ? updatedExpense : expense))
+      );
+      return updatedExpense;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const deleteExpense = async (id: string) => {
+    try {
+      await api.expenses.delete(id);
+      setExpenses((prev: any[]) =>
+        prev.filter((expense: any) => expense.id !== id)
+      );
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return {
+    expenses,
+    loading,
+    error,
+    refetch,
+    createExpense,
+    updateExpense,
+    deleteExpense,
+  };
+}
+
 // Single item hooks
 export function useInvoice(id: string) {
   const [invoice, setInvoice] = useState<any>(null);
@@ -402,4 +458,31 @@ export function useService(id: string) {
   }, [id]);
 
   return { service, loading, error };
+}
+
+export function useExpense(id: string) {
+  const [expense, setExpense] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchExpense = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await api.expenses.getById(id);
+        setExpense(result);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch expense');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpense();
+  }, [id]);
+
+  return { expense, loading, error };
 }
