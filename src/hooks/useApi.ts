@@ -12,6 +12,7 @@ export function useApiData<T>(
       clients?: T[];
       services?: T[];
       expenses?: T[];
+      suppliers?: T[];
       total: number;
     }>;
   },
@@ -36,6 +37,7 @@ export function useApiData<T>(
         result.clients ||
         result.services ||
         result.expenses ||
+        result.suppliers ||
         [];
       setData(items);
     } catch (err) {
@@ -462,31 +464,87 @@ export function useService(id: string) {
   return { service, loading, error };
 }
 
-export function useExpense(id: string) {
-  const [expense, setExpense] = useState<any>(null);
+// Suppliers hook
+export function useSuppliers() {
+  const {
+    data: suppliers,
+    loading,
+    error,
+    refetch,
+    setData: setSuppliers,
+  } = useApiData(api.suppliers);
+
+  const createSupplier = async (supplierData: any) => {
+    try {
+      const newSupplier = await api.suppliers.create(supplierData);
+      setSuppliers((prev) => [newSupplier, ...prev]);
+      return newSupplier;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updateSupplier = async (id: string, supplierData: any) => {
+    try {
+      const updatedSupplier = await api.suppliers.update(id, supplierData);
+      setSuppliers((prev: any[]) =>
+        prev.map((supplier: any) =>
+          supplier.id === id ? updatedSupplier : supplier
+        )
+      );
+      return updatedSupplier;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const deleteSupplier = async (id: string) => {
+    try {
+      await api.suppliers.delete(id);
+      setSuppliers((prev: any[]) =>
+        prev.filter((supplier: any) => supplier.id !== id)
+      );
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return {
+    suppliers,
+    loading,
+    error,
+    refetch,
+    createSupplier,
+    updateSupplier,
+    deleteSupplier,
+  };
+}
+
+export function useSupplier(id: string) {
+  const [supplier, setSupplier] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchExpense = async () => {
+    const fetchSupplier = async () => {
       if (!id) return;
 
       try {
         setLoading(true);
         setError(null);
-        const result = await api.expenses.getById(id);
-        setExpense(result);
+        const result = await api.suppliers.getById(id);
+        setSupplier(result);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : 'Failed to fetch expense'
+          err instanceof Error ? err.message : 'Failed to fetch supplier'
         );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchExpense();
+    fetchSupplier();
   }, [id]);
 
-  return { expense, loading, error };
+  return { supplier, loading, error };
 }
