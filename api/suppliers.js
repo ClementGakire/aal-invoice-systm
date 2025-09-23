@@ -96,7 +96,9 @@ export default async function handler(request, response) {
         const updateData = request.body;
 
         if (!updateId) {
-          return response.status(400).json({ error: 'Supplier ID is required' });
+          return response
+            .status(400)
+            .json({ error: 'Supplier ID is required' });
         }
 
         // Handle optional fields - set to null if empty string
@@ -126,7 +128,9 @@ export default async function handler(request, response) {
         console.log('🗑️ DELETE request - URL:', request.url);
 
         if (!deleteId) {
-          return response.status(400).json({ error: 'Supplier ID is required' });
+          return response
+            .status(400)
+            .json({ error: 'Supplier ID is required' });
         }
 
         const deletedSupplier = await prisma.supplier.delete({

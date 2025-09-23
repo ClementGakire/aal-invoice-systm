@@ -176,7 +176,8 @@ export default function SuppliersPage() {
         )}
         {filteredSuppliers.length === 0 && !searchTerm && (
           <div className="text-center py-8 text-gray-500">
-            No suppliers found. Click "New Supplier" to create your first supplier.
+            No suppliers found. Click "New Supplier" to create your first
+            supplier.
           </div>
         )}
       </div>
@@ -320,7 +321,7 @@ function EditSupplierModal({
 
   const handleSave = async () => {
     if (!name.trim()) return;
-    
+
     setSaving(true);
     try {
       await onSave({ name, contact });
@@ -392,7 +393,11 @@ function EditSupplierModal({
   );
 }
 
-function NewSupplierButton({ onCreate }: { onCreate: (data: any) => Promise<void> }) {
+function NewSupplierButton({
+  onCreate,
+}: {
+  onCreate: (data: any) => Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
@@ -400,7 +405,7 @@ function NewSupplierButton({ onCreate }: { onCreate: (data: any) => Promise<void
 
   const submit = async () => {
     if (!name) return;
-    
+
     setCreating(true);
     try {
       await onCreate({ name, contact });
