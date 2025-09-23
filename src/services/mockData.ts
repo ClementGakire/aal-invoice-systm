@@ -182,6 +182,47 @@ export const servicesMock: ServiceItem[] = load('services', [
   { id: 'sv5', name: 'Training', price: 200, currency: 'USD', vat: false },
 ]);
 
+// NOTE: Services now use database via API. Mock functions kept for backward compatibility
+// but should not be used in new code. Use the API instead.
+
+// Deprecated - Use api.services.create() instead
+export function addService(s: ServiceItem) {
+  console.warn('addService is deprecated - use api.services.create() instead');
+  const arr = [s, ...((exports as any).servicesMock || [])];
+  try {
+    localStorage.setItem(LS_PREFIX + 'services', JSON.stringify(arr));
+  } catch (e) {}
+  (exports as any).servicesMock = arr;
+}
+
+// Deprecated - Use api.services.update() instead
+export function updateService(id: string, updates: Partial<ServiceItem>) {
+  console.warn(
+    'updateService is deprecated - use api.services.update() instead'
+  );
+  const current = (exports as any).servicesMock || [];
+  const updated = current.map((s: ServiceItem) =>
+    s.id === id ? { ...s, ...updates } : s
+  );
+  try {
+    localStorage.setItem(LS_PREFIX + 'services', JSON.stringify(updated));
+  } catch (e) {}
+  (exports as any).servicesMock = updated;
+}
+
+// Deprecated - Use api.services.delete() instead
+export function deleteService(id: string) {
+  console.warn(
+    'deleteService is deprecated - use api.services.delete() instead'
+  );
+  const current = (exports as any).servicesMock || [];
+  const filtered = current.filter((s: ServiceItem) => s.id !== id);
+  try {
+    localStorage.setItem(LS_PREFIX + 'services', JSON.stringify(filtered));
+  } catch (e) {}
+  (exports as any).servicesMock = filtered;
+}
+
 export const jobsMock: LogisticsJob[] = load('jobs', []);
 
 export let invoicesMock: Invoice[] = load('invoices', [
@@ -459,34 +500,6 @@ export function deleteSupplier(id: string) {
     localStorage.setItem(LS_PREFIX + 'suppliers', JSON.stringify(filtered));
   } catch (e) {}
   (exports as any).suppliersMock = filtered;
-}
-
-export function addService(s: ServiceItem) {
-  const arr = [s, ...((exports as any).servicesMock || [])];
-  try {
-    localStorage.setItem(LS_PREFIX + 'services', JSON.stringify(arr));
-  } catch (e) {}
-  (exports as any).servicesMock = arr;
-}
-
-export function updateService(id: string, updates: Partial<ServiceItem>) {
-  const current = (exports as any).servicesMock || [];
-  const updated = current.map((s: ServiceItem) =>
-    s.id === id ? { ...s, ...updates } : s
-  );
-  try {
-    localStorage.setItem(LS_PREFIX + 'services', JSON.stringify(updated));
-  } catch (e) {}
-  (exports as any).servicesMock = updated;
-}
-
-export function deleteService(id: string) {
-  const current = (exports as any).servicesMock || [];
-  const filtered = current.filter((s: ServiceItem) => s.id !== id);
-  try {
-    localStorage.setItem(LS_PREFIX + 'services', JSON.stringify(filtered));
-  } catch (e) {}
-  (exports as any).servicesMock = filtered;
 }
 
 export function addJob(j: LogisticsJob) {

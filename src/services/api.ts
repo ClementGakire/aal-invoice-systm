@@ -12,6 +12,10 @@ import {
   addInvoice as addInvoiceMock,
   updateInvoice as updateInvoiceMock,
   deleteInvoice as deleteInvoiceMock,
+  servicesMock,
+  addService as addServiceMock,
+  updateService as updateServiceMock,
+  deleteService as deleteServiceMock,
 } from './mockData';
 
 const API_BASE_URL =
@@ -472,6 +476,189 @@ export const jobsApi = {
   },
 };
 
+// Services API
+export const servicesApi = {
+  // Get all services
+  getAll: async () => {
+    try {
+      console.log('🔍 Fetching services from database...');
+      const response = await apiCall<{ services: any[]; total: number }>(
+        '/services'
+      );
+
+      console.log(
+        `✅ Successfully fetched ${
+          response?.services?.length || 0
+        } services from database`
+      );
+
+      // The API response should have the correct structure: { services: [], total: number }
+      if (response && Array.isArray(response.services)) {
+        return response;
+      }
+
+      // If response is malformed, throw an error to trigger fallback
+      throw new Error('Invalid response format from API');
+    } catch (error) {
+      console.error('❌ Failed to fetch services from database:', error);
+
+      if (FORCE_REAL_API) {
+        // When forcing real API, don't fall back to mock data - throw the error
+        throw new Error(
+          `API Error: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Falling back to mock data for services');
+      return { services: servicesMock, total: servicesMock.length };
+    }
+  },
+
+  // Get service by ID
+  getById: async (id: string) => {
+    try {
+      console.log(`🔍 Fetching service ${id} from database...`);
+      const response = await apiCall<any>(`/services?id=${id}`);
+
+      console.log(
+        '✅ Successfully fetched service by ID:',
+        response?.name || 'Unknown'
+      );
+
+      // The API should return the service object directly
+      if (response && response.id) {
+        return response;
+      }
+
+      throw new Error('Service not found or invalid response format');
+    } catch (error) {
+      console.error('❌ Failed to fetch service by ID from database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to get service: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Falling back to mock data for service by ID');
+      const service = servicesMock.find((s) => s.id === id);
+      if (!service) throw new Error('Service not found');
+      return service;
+    }
+  },
+
+  // Create new service
+  create: async (serviceData: any) => {
+    try {
+      console.log(
+        '📝 Creating new service in database:',
+        serviceData.name || 'Unknown name'
+      );
+      const result = await apiCall<any>('/services', {
+        method: 'POST',
+        body: JSON.stringify(serviceData),
+      });
+
+      // Extract the service object from the API response
+      const service = result?.service || result;
+      console.log(
+        '✅ Successfully created service:',
+        service?.name || 'Unknown'
+      );
+      return service;
+    } catch (error) {
+      console.error('❌ Failed to create service in database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to create service: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Creating service in mock data only (fallback)');
+      const newService = { ...serviceData, id: generateId() };
+      addServiceMock(newService);
+      return newService;
+    }
+  },
+
+  // Update service
+  update: async (id: string, serviceData: any) => {
+    try {
+      console.log(`🔄 Updating service ${id} in database...`);
+      const result = await apiCall<any>(`/services?id=${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(serviceData),
+      });
+
+      // Extract the service object from the API response
+      const service = result?.service || result;
+      console.log(
+        '✅ Successfully updated service:',
+        service?.name || 'Unknown'
+      );
+      return service;
+    } catch (error) {
+      console.error('❌ Failed to update service in database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to update service: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Updating service in mock data only (fallback)');
+      updateServiceMock(id, serviceData);
+      return { ...serviceData, id };
+    }
+  },
+
+  // Delete service
+  delete: async (id: string) => {
+    try {
+      console.log(`🗑️ Deleting service ${id} from database...`);
+      const result = await apiCall<{ message: string; service: any }>(
+        `/services?id=${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      console.log(
+        '✅ Successfully deleted service:',
+        result?.service?.name || id
+      );
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to delete service from database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to delete service: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Deleting service from mock data only (fallback)');
+      const service = servicesMock.find((s) => s.id === id);
+      if (service) {
+        deleteServiceMock(id);
+        return { message: 'Service deleted successfully', service };
+      }
+      throw new Error('Service not found');
+    }
+  },
+};
+
 // Clients API
 export const clientsApi = {
   // Get all clients
@@ -665,6 +852,7 @@ export const api = {
   invoices: invoiceApi,
   jobs: jobsApi,
   clients: clientsApi,
+  services: servicesApi,
   legacy: legacyApi,
 
   // Base64 testing API

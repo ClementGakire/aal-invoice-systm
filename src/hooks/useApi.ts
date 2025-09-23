@@ -10,6 +10,7 @@ export function useApiData<T>(
       invoices?: T[];
       jobs?: T[];
       clients?: T[];
+      services?: T[];
       total: number;
     }>;
   },
@@ -32,6 +33,7 @@ export function useApiData<T>(
         result.invoices ||
         result.jobs ||
         result.clients ||
+        result.services ||
         [];
       setData(items);
     } catch (err) {
@@ -233,6 +235,62 @@ export function useClients() {
   };
 }
 
+// Services hook
+export function useServices() {
+  const {
+    data: services,
+    loading,
+    error,
+    refetch,
+    setData: setServices,
+  } = useApiData(api.services);
+
+  const createService = async (serviceData: any) => {
+    try {
+      const newService = await api.services.create(serviceData);
+      setServices((prev) => [newService, ...prev]);
+      return newService;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updateService = async (id: string, serviceData: any) => {
+    try {
+      const updatedService = await api.services.update(id, serviceData);
+      setServices((prev: any[]) =>
+        prev.map((service: any) =>
+          service.id === id ? updatedService : service
+        )
+      );
+      return updatedService;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const deleteService = async (id: string) => {
+    try {
+      await api.services.delete(id);
+      setServices((prev: any[]) =>
+        prev.filter((service: any) => service.id !== id)
+      );
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return {
+    services,
+    loading,
+    error,
+    refetch,
+    createService,
+    updateService,
+    deleteService,
+  };
+}
+
 // Single item hooks
 export function useInvoice(id: string) {
   const [invoice, setInvoice] = useState<any>(null);
@@ -315,4 +373,33 @@ export function useClient(id: string) {
   }, [id]);
 
   return { client, loading, error };
+}
+
+export function useService(id: string) {
+  const [service, setService] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchService = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await api.services.getById(id);
+        setService(result);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch service'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchService();
+  }, [id]);
+
+  return { service, loading, error };
 }
