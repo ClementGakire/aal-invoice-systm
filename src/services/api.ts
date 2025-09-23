@@ -1034,6 +1034,82 @@ export const legacyApi = {
   },
 };
 
+// Dashboard API
+export const dashboardApi = {
+  // Get dashboard analytics data
+  getAnalytics: async () => {
+    try {
+      console.log('📊 Fetching dashboard analytics from database...');
+      const response = await apiCall<{
+        metrics: {
+          totalClients: number;
+          totalInvoices: number;
+          openInvoices: number;
+          activeJobs: number;
+          totalRevenue: number;
+          totalExpenses: number;
+          netRevenue: number;
+        };
+        recentJobs: any[];
+        recentInvoices: any[];
+        charts: {
+          salesLast7Days: any[];
+          salesLast6Months: any[];
+          expensesByCategory: any[];
+        };
+        generatedAt: string;
+        success: boolean;
+      }>('/dashboard');
+
+      console.log('✅ Successfully fetched dashboard analytics');
+      console.log(
+        '📊 Revenue calculated:',
+        response?.metrics?.totalRevenue || 0
+      );
+      console.log('💰 Net revenue:', response?.metrics?.netRevenue || 0);
+
+      if (response && response.success) {
+        return response;
+      }
+
+      throw new Error('Invalid response format from dashboard API');
+    } catch (error) {
+      console.error('❌ Failed to fetch dashboard analytics:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Dashboard API Error: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Falling back to mock data for dashboard');
+      // Return mock data structure if API fails
+      return {
+        metrics: {
+          totalClients: 0,
+          totalInvoices: 0,
+          openInvoices: 0,
+          activeJobs: 0,
+          totalRevenue: 0,
+          totalExpenses: 0,
+          netRevenue: 0,
+        },
+        recentJobs: [],
+        recentInvoices: [],
+        charts: {
+          salesLast7Days: [],
+          salesLast6Months: [],
+          expensesByCategory: [],
+        },
+        generatedAt: new Date().toISOString(),
+        success: false,
+      };
+    }
+  },
+};
+
 // Suppliers API
 export const suppliersApi = {
   // Get all suppliers
@@ -1216,6 +1292,7 @@ export const api = {
   services: servicesApi,
   expenses: expensesApi,
   suppliers: suppliersApi,
+  dashboard: dashboardApi,
   legacy: legacyApi,
 
   // Base64 testing API
