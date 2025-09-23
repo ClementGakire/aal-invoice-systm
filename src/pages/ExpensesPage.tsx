@@ -7,7 +7,15 @@ import {
 } from '../services/api';
 import FallbackBanner from '../components/FallbackBanner';
 import { Expense } from '../services/mockData';
-import { Search, X, Edit2, Trash2, RefreshCw, Loader, AlertCircle } from 'lucide-react';
+import {
+  Search,
+  X,
+  Edit2,
+  Trash2,
+  RefreshCw,
+  Loader,
+  AlertCircle,
+} from 'lucide-react';
 
 export default function ExpensesPage() {
   const {
@@ -130,7 +138,9 @@ export default function ExpensesPage() {
                     <div className="muted">
                       {e.currency} {e.amount} • Job: {e.jobNumber || 'N/A'}
                     </div>
-                    <div className="muted">Supplier: {e.supplierName || 'N/A'}</div>
+                    <div className="muted">
+                      Supplier: {e.supplierName || 'N/A'}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -167,93 +177,94 @@ export default function ExpensesPage() {
             )}
             {filteredExpenses.length === 0 && !searchTerm && !loading && (
               <div className="text-center py-8 text-gray-500">
-                No expenses available. Create your first expense by clicking "Record Expense" button.
+                No expenses available. Create your first expense by clicking
+                "Record Expense" button.
               </div>
             )}
           </div>
 
-      {/* View Expense Modal */}
-      {viewingExpense && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30">
-          <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md animate-fadein">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Expense Details</h3>
-              <button
-                onClick={() => setViewingExpense(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Expense ID
-                </label>
-                <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                  {viewingExpense.id}
+          {/* View Expense Modal */}
+          {viewingExpense && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30">
+              <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md animate-fadein">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Expense Details</h3>
+                  <button
+                    onClick={() => setViewingExpense(null)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Title
-                </label>
-                <div className="text-sm font-medium p-2 border rounded">
-                  {viewingExpense.title}
-                </div>
-              </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Expense ID
+                    </label>
+                    <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                      {viewingExpense.id}
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Amount
-                  </label>
-                  <div className="text-sm font-bold text-green-700 p-2 border rounded">
-                    {viewingExpense.currency} {viewingExpense.amount}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Title
+                    </label>
+                    <div className="text-sm font-medium p-2 border rounded">
+                      {viewingExpense.title}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Amount
+                      </label>
+                      <div className="text-sm font-bold text-green-700 p-2 border rounded">
+                        {viewingExpense.currency} {viewingExpense.amount}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Currency
+                      </label>
+                      <div className="text-sm p-2 border rounded">
+                        {viewingExpense.currency}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Job Number
+                    </label>
+                    <div className="text-sm p-2 border rounded">
+                      {viewingExpense.jobNumber || 'Not assigned to a job'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Supplier
+                    </label>
+                    <div className="text-sm p-2 border rounded">
+                      {viewingExpense.supplierName || 'No supplier specified'}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Currency
-                  </label>
-                  <div className="text-sm p-2 border rounded">
-                    {viewingExpense.currency}
-                  </div>
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Job Number
-                </label>
-                <div className="text-sm p-2 border rounded">
-                  {viewingExpense.jobNumber || 'Not assigned to a job'}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Supplier
-                </label>
-                <div className="text-sm p-2 border rounded">
-                  {viewingExpense.supplierName || 'No supplier specified'}
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={() => setViewingExpense(null)}
+                    className="px-4 py-2 rounded border shadow hover:bg-gray-100 transition"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>
-
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={() => setViewingExpense(null)}
-                className="px-4 py-2 rounded border shadow hover:bg-gray-100 transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
           {/* Edit Expense Modal */}
           {editingExpense && (
@@ -286,8 +297,8 @@ export default function ExpensesPage() {
                 <div className="mb-6">
                   <p className="text-gray-700">
                     Are you sure you want to delete expense{' '}
-                    <strong>{deletingExpense.title}</strong>? This action cannot be
-                    undone.
+                    <strong>{deletingExpense.title}</strong>? This action cannot
+                    be undone.
                   </p>
                   {deleteError && (
                     <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded">
@@ -477,10 +488,10 @@ function NewExpenseButton() {
 
   const submit = async () => {
     if (!title) return;
-    
+
     setIsCreating(true);
     setCreateError(null);
-    
+
     try {
       await createExpense({
         title,
@@ -514,7 +525,7 @@ function NewExpenseButton() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30">
           <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md animate-fadein">
             <div className="mb-4 text-lg font-semibold">Record Expense</div>
-            
+
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}

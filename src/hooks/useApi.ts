@@ -317,7 +317,9 @@ export function useExpenses() {
     try {
       const updatedExpense = await api.expenses.update(id, expenseData);
       setExpenses((prev: any[]) =>
-        prev.map((expense: any) => (expense.id === id ? updatedExpense : expense))
+        prev.map((expense: any) =>
+          expense.id === id ? updatedExpense : expense
+        )
       );
       return updatedExpense;
     } catch (err) {
@@ -475,7 +477,9 @@ export function useExpense(id: string) {
         const result = await api.expenses.getById(id);
         setExpense(result);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch expense');
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch expense'
+        );
       } finally {
         setLoading(false);
       }
