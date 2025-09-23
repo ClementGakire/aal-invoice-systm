@@ -293,7 +293,7 @@ export default function PrintableInvoice({
             }}
           />
 
-          <div className="max-w-4xl mx-auto bg-white print:max-w-none relative z-10 shadow-lg print:shadow-none p-6 print:p-0">
+          <div className="max-w-4xl mx-auto print:max-w-none relative z-10 shadow-lg print:shadow-none p-6 print:p-0">
             {/* Header */}
             <div className="flex items-start justify-between mb-3 print:mb-2">
               <div className="flex items-center gap-3">
