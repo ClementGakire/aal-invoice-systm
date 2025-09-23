@@ -1034,6 +1034,180 @@ export const legacyApi = {
   },
 };
 
+// Suppliers API
+export const suppliersApi = {
+  // Get all suppliers
+  getAll: async () => {
+    try {
+      console.log('🔍 Fetching suppliers from database...');
+      const response = await apiCall<{ suppliers: any[]; total: number }>(
+        '/suppliers'
+      );
+
+      console.log(
+        `✅ Successfully fetched ${
+          response?.suppliers?.length || 0
+        } suppliers from database`
+      );
+
+      // The API response should have the correct structure: { suppliers: [], total: number }
+      if (response && Array.isArray(response.suppliers)) {
+        return response;
+      }
+
+      // If response is malformed, throw an error to trigger fallback
+      throw new Error('Invalid response format from API');
+    } catch (error) {
+      console.error('❌ Failed to fetch suppliers from database:', error);
+
+      if (FORCE_REAL_API) {
+        // When forcing real API, don't fall back to mock data - throw the error
+        throw new Error(
+          `API Error: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Falling back to mock data for suppliers');
+      // Note: Using empty array since suppliers don't have mock data yet
+      return { suppliers: [], total: 0 };
+    }
+  },
+
+  // Get supplier by ID
+  getById: async (id: string) => {
+    try {
+      console.log(`🔍 Fetching supplier ${id} from database...`);
+      const response = await apiCall<any>(`/suppliers?id=${id}`);
+
+      console.log(
+        '✅ Successfully fetched supplier by ID:',
+        response?.name || 'Unknown'
+      );
+
+      // The API should return the supplier object directly
+      if (response && response.id) {
+        return response;
+      }
+
+      throw new Error('Supplier not found or invalid response format');
+    } catch (error) {
+      console.error('❌ Failed to fetch supplier by ID from database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to get supplier: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Falling back to empty for supplier by ID');
+      throw new Error('Supplier not found');
+    }
+  },
+
+  // Create new supplier
+  create: async (supplierData: any) => {
+    try {
+      console.log(
+        '📝 Creating new supplier in database:',
+        supplierData.name || 'Unknown name'
+      );
+      const result = await apiCall<any>('/suppliers', {
+        method: 'POST',
+        body: JSON.stringify(supplierData),
+      });
+
+      // Extract the supplier object from the API response
+      const supplier = result?.supplier || result;
+      console.log(
+        '✅ Successfully created supplier:',
+        supplier?.name || 'Unknown'
+      );
+      return supplier;
+    } catch (error) {
+      console.error('❌ Failed to create supplier in database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to create supplier: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Creating supplier failed - no mock fallback');
+      throw new Error('Failed to create supplier');
+    }
+  },
+
+  // Update supplier
+  update: async (id: string, supplierData: any) => {
+    try {
+      console.log(`🔄 Updating supplier ${id} in database...`);
+      const result = await apiCall<any>(`/suppliers?id=${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(supplierData),
+      });
+
+      // Extract the supplier object from the API response
+      const supplier = result?.supplier || result;
+      console.log(
+        '✅ Successfully updated supplier:',
+        supplier?.name || 'Unknown'
+      );
+      return supplier;
+    } catch (error) {
+      console.error('❌ Failed to update supplier in database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to update supplier: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Updating supplier failed - no mock fallback');
+      throw new Error('Failed to update supplier');
+    }
+  },
+
+  // Delete supplier
+  delete: async (id: string) => {
+    try {
+      console.log(`🗑️ Deleting supplier ${id} from database...`);
+      const result = await apiCall<{ message: string; supplier: any }>(
+        `/suppliers?id=${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      console.log(
+        '✅ Successfully deleted supplier:',
+        result?.supplier?.name || id
+      );
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to delete supplier from database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to delete supplier: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Deleting supplier failed - no mock fallback');
+      throw new Error('Failed to delete supplier');
+    }
+  },
+};
+
 // Export all APIs
 export const api = {
   invoices: invoiceApi,
@@ -1041,6 +1215,7 @@ export const api = {
   clients: clientsApi,
   services: servicesApi,
   expenses: expensesApi,
+  suppliers: suppliersApi,
   legacy: legacyApi,
 
   // Base64 testing API

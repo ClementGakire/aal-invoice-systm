@@ -1,37 +1,124 @@
 import React, { useState, useMemo } from 'react';
-import {
-  suppliersMock,
-  addSupplier,
-  updateSupplier,
-  deleteSupplier,
-  type Supplier,
-} from '../services/mockData';
 import { Search, X, Edit2, Trash2 } from 'lucide-react';
+import { useSuppliers } from '../hooks/useApi';
 
 export default function SuppliersPage() {
+  const {
+    suppliers,
+    loading,
+    error,
+    refetch,
+    createSupplier,
+    updateSupplier,
+    deleteSupplier,
+  } = useSuppliers();
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
-  const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(
-    null
-  );
+  const [viewingSupplier, setViewingSupplier] = useState<any>(null);
+  const [editingSupplier, setEditingSupplier] = useState<any>(null);
+  const [deletingSupplier, setDeletingSupplier] = useState<any>(null);
 
   const filteredSuppliers = useMemo(() => {
-    if (!searchTerm) return suppliersMock;
+    if (!searchTerm) return suppliers;
 
-    return suppliersMock.filter(
-      (supplier) =>
+    return suppliers.filter(
+      (supplier: any) =>
         supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         supplier.contact?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, suppliers]);
+
+  const handleRetry = () => {
+    refetch();
+  };
+
+  const handleCreate = async (supplierData: any) => {
+    try {
+      await createSupplier(supplierData);
+      console.log('✅ Supplier created successfully');
+    } catch (error) {
+      console.error('❌ Failed to create supplier:', error);
+      alert('Failed to create supplier. Please try again.');
+      throw error;
+    }
+  };
+
+  const handleUpdate = async (id: string, supplierData: any) => {
+    try {
+      await updateSupplier(id, supplierData);
+      console.log('✅ Supplier updated successfully');
+    } catch (error) {
+      console.error('❌ Failed to update supplier:', error);
+      alert('Failed to update supplier. Please try again.');
+      throw error;
+    }
+  };
+
+  const handleDelete = async (supplier: any) => {
+    try {
+      await deleteSupplier(supplier.id);
+      console.log('✅ Supplier deleted successfully');
+    } catch (error) {
+      console.error('❌ Failed to delete supplier:', error);
+      alert('Failed to delete supplier. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="page-title">Suppliers</h2>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 rounded w-full mb-4"></div>
+          <div className="space-y-3">
+            <div className="h-16 bg-gray-200 rounded"></div>
+            <div className="h-16 bg-gray-200 rounded"></div>
+            <div className="h-16 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="page-title">Suppliers</h2>
-        <NewSupplierButton />
+        <h2 className="page-title">Suppliers ({suppliers.length})</h2>
+        <NewSupplierButton onCreate={handleCreate} />
       </div>
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                <strong>Error:</strong> Failed to load suppliers: {error}
+              </p>
+              <button
+                onClick={handleRetry}
+                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mb-4">
         <div className="relative">
@@ -47,11 +134,16 @@ export default function SuppliersPage() {
       </div>
 
       <div className="space-y-3">
-        {filteredSuppliers.map((s) => (
+        {filteredSuppliers.map((s: any) => (
           <div key={s.id} className="card flex items-center justify-between">
             <div>
               <div className="font-medium">{s.name}</div>
-              <div className="muted">{s.contact}</div>
+              <div className="muted">
+                {s.contact || 'No contact information'}
+              </div>
+              <div className="text-xs text-gray-500">
+                {s._count?.expenses || 0} expenses
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -80,6 +172,11 @@ export default function SuppliersPage() {
         {filteredSuppliers.length === 0 && searchTerm && (
           <div className="text-center py-8 text-gray-500">
             No suppliers found matching "{searchTerm}"
+          </div>
+        )}
+        {filteredSuppliers.length === 0 && !searchTerm && (
+          <div className="text-center py-8 text-gray-500">
+            No suppliers found. Click "New Supplier" to create your first supplier.
           </div>
         )}
       </div>
@@ -125,6 +222,15 @@ export default function SuppliersPage() {
                   {viewingSupplier.contact || 'No contact information'}
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Expenses
+                </label>
+                <div className="text-sm p-2 border rounded">
+                  {viewingSupplier._count?.expenses || 0} expenses
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end mt-6">
@@ -144,10 +250,9 @@ export default function SuppliersPage() {
         <EditSupplierModal
           supplier={editingSupplier}
           onClose={() => setEditingSupplier(null)}
-          onSave={(updates) => {
-            updateSupplier(editingSupplier.id, updates);
+          onSave={async (updates) => {
+            await handleUpdate(editingSupplier.id, updates);
             setEditingSupplier(null);
-            window.location.reload();
           }}
         />
       )}
@@ -184,10 +289,9 @@ export default function SuppliersPage() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  deleteSupplier(deletingSupplier.id);
+                onClick={async () => {
+                  await handleDelete(deletingSupplier);
                   setDeletingSupplier(null);
-                  window.location.reload();
                 }}
                 className="px-4 py-2 rounded bg-red-600 text-white shadow hover:bg-red-700 transition"
               >
@@ -206,16 +310,25 @@ function EditSupplierModal({
   onClose,
   onSave,
 }: {
-  supplier: Supplier;
+  supplier: any;
   onClose: () => void;
-  onSave: (updates: Partial<Supplier>) => void;
+  onSave: (updates: any) => Promise<void>;
 }) {
   const [name, setName] = useState(supplier.name);
   const [contact, setContact] = useState(supplier.contact || '');
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) return;
-    onSave({ name, contact });
+    
+    setSaving(true);
+    try {
+      await onSave({ name, contact });
+    } catch (error) {
+      console.error('Failed to save supplier:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -262,14 +375,16 @@ function EditSupplierModal({
           <button
             onClick={onClose}
             className="px-4 py-2 rounded border shadow hover:bg-gray-100 transition"
+            disabled={saving}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 rounded bg-sky-600 text-white shadow hover:bg-sky-700 transition"
+            disabled={saving}
+            className="px-4 py-2 rounded bg-sky-600 text-white shadow hover:bg-sky-700 transition disabled:opacity-50"
           >
-            Save Changes
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -277,18 +392,28 @@ function EditSupplierModal({
   );
 }
 
-function NewSupplierButton() {
+function NewSupplierButton({ onCreate }: { onCreate: (data: any) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
-  const submit = () => {
+  const [creating, setCreating] = useState(false);
+
+  const submit = async () => {
     if (!name) return;
-    addSupplier({ id: 's_' + Date.now(), name, contact });
-    setName('');
-    setContact('');
-    setOpen(false);
-    window.location.reload();
+    
+    setCreating(true);
+    try {
+      await onCreate({ name, contact });
+      setName('');
+      setContact('');
+      setOpen(false);
+    } catch (error) {
+      console.error('Failed to create supplier:', error);
+    } finally {
+      setCreating(false);
+    }
   };
+
   return (
     <>
       <button
@@ -304,7 +429,7 @@ function NewSupplierButton() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Name"
+              placeholder="Name *"
               className="border px-2 py-1 rounded w-full mb-3 focus:ring focus:ring-sky-200"
               autoFocus
             />
@@ -317,13 +442,15 @@ function NewSupplierButton() {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={submit}
-                className="px-4 py-2 rounded bg-sky-600 text-white shadow hover:bg-sky-700 transition"
+                disabled={creating || !name.trim()}
+                className="px-4 py-2 rounded bg-sky-600 text-white shadow hover:bg-sky-700 transition disabled:opacity-50"
               >
-                Create
+                {creating ? 'Creating...' : 'Create'}
               </button>
               <button
                 onClick={() => setOpen(false)}
                 className="px-4 py-2 rounded border shadow hover:bg-gray-100 transition"
+                disabled={creating}
               >
                 Cancel
               </button>
