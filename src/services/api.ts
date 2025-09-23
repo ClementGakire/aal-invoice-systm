@@ -20,6 +20,10 @@ import {
   addExpense as addExpenseMock,
   updateExpense as updateExpenseMock,
   deleteExpense as deleteExpenseMock,
+  usersMock,
+  addUser as addUserMock,
+  updateUser as updateUserMock,
+  deleteUser as deleteUserMock,
 } from './mockData';
 
 const API_BASE_URL =
@@ -277,6 +281,37 @@ function isBase64(str: string) {
   }
 }
 
+// Helper function to convert date strings to Date objects
+function convertDatesToObjects(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertDatesToObjects(item));
+  }
+
+  if (typeof obj === 'object') {
+    const converted: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (
+        (key === 'createdAt' || key === 'updatedAt' || key.includes('Date')) &&
+        typeof value === 'string' &&
+        !isNaN(Date.parse(value))
+      ) {
+        converted[key] = new Date(value);
+      } else if (typeof value === 'object') {
+        converted[key] = convertDatesToObjects(value);
+      } else {
+        converted[key] = value;
+      }
+    }
+    return converted;
+  }
+
+  return obj;
+}
+
 // Helper to generate IDs for mock data
 function generateId(): string {
   return 'id_' + Math.random().toString(36).substr(2, 9);
@@ -416,7 +451,8 @@ export const jobsApi = {
   // Get job by ID
   getById: async (id: string) => {
     try {
-      return await apiCall<any>(`/jobs?id=${id}`);
+      const response = await apiCall<any>(`/jobs?id=${id}`);
+      return convertDatesToObjects(response);
     } catch (error) {
       console.warn('Using mock data for job by ID:', error);
       const job = jobsMock.find((j) => j.id === id);
@@ -435,7 +471,7 @@ export const jobsApi = {
 
       // Extract the job object from the API response
       const job = result?.job || result;
-      return job;
+      return convertDatesToObjects(job);
     } catch (error) {
       console.warn('Using mock data for creating job:', error);
       const newJob = { ...jobData, id: generateId() };
@@ -454,7 +490,7 @@ export const jobsApi = {
 
       // Extract the job object from the API response
       const job = result?.job || result;
-      return job;
+      return convertDatesToObjects(job);
     } catch (error) {
       console.warn('Using mock data for updating job:', error);
       updateJobMock(id, jobData);
@@ -465,9 +501,16 @@ export const jobsApi = {
   // Delete job
   delete: async (id: string) => {
     try {
-      return await apiCall<{ message: string; job: any }>(`/jobs?id=${id}`, {
-        method: 'DELETE',
-      });
+      const result = await apiCall<{ message: string; job: any }>(
+        `/jobs?id=${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      return {
+        ...result,
+        job: result?.job ? convertDatesToObjects(result.job) : result?.job,
+      };
     } catch (error) {
       console.warn('Using mock data for deleting job:', error);
       const job = jobsMock.find((j) => j.id === id);
@@ -864,7 +907,14 @@ export const clientsApi = {
 
       // The API response should have the correct structure: { clients: [], total: number }
       if (response && Array.isArray(response.clients)) {
-        return response;
+        // Convert date strings to Date objects
+        const clientsWithDates = {
+          ...response,
+          clients: response.clients.map((client) =>
+            convertDatesToObjects(client)
+          ),
+        };
+        return clientsWithDates;
       }
 
       // If response is malformed, throw an error to trigger fallback
@@ -899,7 +949,7 @@ export const clientsApi = {
 
       // The API should return the client object directly
       if (response && response.id) {
-        return response;
+        return convertDatesToObjects(response);
       }
 
       throw new Error('Client not found or invalid response format');
@@ -936,7 +986,7 @@ export const clientsApi = {
       // Extract the client object from the API response
       const client = result?.client || result;
       console.log('✅ Successfully created client:', client?.name || 'Unknown');
-      return client;
+      return convertDatesToObjects(client);
     } catch (error) {
       console.error('❌ Failed to create client in database:', error);
 
@@ -967,7 +1017,7 @@ export const clientsApi = {
       // Extract the client object from the API response
       const client = result?.client || result;
       console.log('✅ Successfully updated client:', client?.name || 'Unknown');
-      return client;
+      return convertDatesToObjects(client);
     } catch (error) {
       console.error('❌ Failed to update client in database:', error);
 
@@ -1284,11 +1334,223 @@ export const suppliersApi = {
   },
 };
 
+// Users API
+export const usersApi = {
+  // Get all users with optional filters
+  getAll: async (filters?: { role?: string; isActive?: boolean }) => {
+    try {
+      console.log('🔍 Fetching users from database...');
+
+      const params = new URLSearchParams();
+      if (filters?.role) params.append('role', filters.role);
+      if (filters?.isActive !== undefined)
+        params.append('isActive', filters.isActive.toString());
+
+      const queryString = params.toString();
+      const endpoint = queryString ? `/users?${queryString}` : '/users';
+
+      const response = await apiCall<{
+        users: any[];
+        total: number;
+        filters: any;
+      }>(endpoint);
+
+      console.log(
+        `✅ Successfully fetched ${
+          response?.users?.length || 0
+        } users from database`
+      );
+
+      // The API response should have the correct structure: { users: [], total: number }
+      if (response && Array.isArray(response.users)) {
+        // Convert date strings to Date objects
+        const usersWithDates = {
+          ...response,
+          users: response.users.map((user) => convertDatesToObjects(user)),
+        };
+        return usersWithDates;
+      }
+
+      // If response is malformed, throw an error to trigger fallback
+      throw new Error('Invalid response format from API');
+    } catch (error) {
+      console.error('❌ Failed to fetch users from database:', error);
+
+      if (FORCE_REAL_API) {
+        // When forcing real API, don't fall back to mock data - throw the error
+        throw new Error(
+          `API Error: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Falling back to mock data for users');
+
+      // Apply filters to mock data
+      let filteredUsers = [...usersMock];
+      if (filters?.role) {
+        filteredUsers = filteredUsers.filter(
+          (user) => user.role === filters.role
+        );
+      }
+      if (filters?.isActive !== undefined) {
+        filteredUsers = filteredUsers.filter(
+          (user) => user.isActive === filters.isActive
+        );
+      }
+
+      return {
+        users: filteredUsers,
+        total: filteredUsers.length,
+        filters: filters || {},
+      };
+    }
+  },
+
+  // Get user by ID
+  getById: async (id: string) => {
+    try {
+      console.log(`🔍 Fetching user ${id} from database...`);
+      const response = await apiCall<any>(`/users?id=${id}`);
+
+      console.log(
+        '✅ Successfully fetched user by ID:',
+        response?.name || 'Unknown'
+      );
+
+      // The API should return the user object directly
+      if (response && response.id) {
+        return convertDatesToObjects(response);
+      }
+
+      throw new Error('User not found or invalid response format');
+    } catch (error) {
+      console.error('❌ Failed to fetch user by ID from database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to get user: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Falling back to mock data for user by ID');
+      const user = usersMock.find((u) => u.id === id);
+      if (!user) throw new Error('User not found');
+      return user;
+    }
+  },
+
+  // Create new user
+  create: async (userData: any) => {
+    try {
+      console.log(
+        '📝 Creating new user in database:',
+        userData.name || 'Unknown name'
+      );
+      const result = await apiCall<any>('/users', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+
+      // Extract the user object from the API response
+      const user = result?.user || result;
+      console.log('✅ Successfully created user:', user?.name || 'Unknown');
+      return convertDatesToObjects(user);
+    } catch (error) {
+      console.error('❌ Failed to create user in database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to create user: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Creating user in mock data only (fallback)');
+      const newUser = { ...userData, id: generateId() };
+      addUserMock(newUser);
+      return newUser;
+    }
+  },
+
+  // Update user
+  update: async (id: string, userData: any) => {
+    try {
+      console.log(`🔄 Updating user ${id} in database...`);
+      const result = await apiCall<any>(`/users?id=${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+      });
+
+      // Extract the user object from the API response
+      const user = result?.user || result;
+      console.log('✅ Successfully updated user:', user?.name || 'Unknown');
+      return convertDatesToObjects(user);
+    } catch (error) {
+      console.error('❌ Failed to update user in database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to update user: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Updating user in mock data only (fallback)');
+      updateUserMock(id, userData);
+      return { ...userData, id };
+    }
+  },
+
+  // Delete user
+  delete: async (id: string) => {
+    try {
+      console.log(`🗑️ Deleting user ${id} from database...`);
+      const result = await apiCall<{ message: string; user: any }>(
+        `/users?id=${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      console.log('✅ Successfully deleted user:', result?.user?.name || id);
+      return {
+        ...result,
+        user: result?.user ? convertDatesToObjects(result.user) : result?.user,
+      };
+    } catch (error) {
+      console.error('❌ Failed to delete user from database:', error);
+
+      if (FORCE_REAL_API) {
+        throw new Error(
+          `Failed to delete user: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+
+      console.warn('⚠️ Deleting user from mock data only (fallback)');
+      const user = usersMock.find((u) => u.id === id);
+      if (user) {
+        deleteUserMock(id);
+        return { message: 'User deleted successfully', user };
+      }
+      throw new Error('User not found');
+    }
+  },
+};
+
 // Export all APIs
 export const api = {
   invoices: invoiceApi,
   jobs: jobsApi,
   clients: clientsApi,
+  users: usersApi,
   services: servicesApi,
   expenses: expensesApi,
   suppliers: suppliersApi,

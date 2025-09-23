@@ -172,22 +172,25 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </form>
 
           {/* Demo Credentials */}
-          {/* <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-sm font-medium text-gray-700 mb-2">
               Demo Credentials:
             </h3>
             <div className="text-xs text-gray-600 space-y-1">
               <p>
-                <strong>Admin:</strong> admin@aal.com / admin123
+                <strong>Admin:</strong> tito@aal.rw / tito123
               </p>
               <p>
-                <strong>Finance:</strong> finance@aal.com / finance123
+                <strong>Finance:</strong> jimmy@aal.rw / jimmy123
               </p>
               <p>
-                <strong>Operations:</strong> operations@aal.com / ops123
+                <strong>Operations:</strong> musoni@aal.rw / musoni123
+              </p>
+              <p>
+                <strong>Sales:</strong> danny.sales@aal.rw / danny123
               </p>
             </div>
-          </div> */}
+          </div>
         </div>
 
         {/* Footer */}
