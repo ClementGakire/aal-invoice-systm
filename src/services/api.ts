@@ -286,16 +286,19 @@ function convertDatesToObjects(obj: any): any {
   if (obj === null || obj === undefined) {
     return obj;
   }
-  
+
   if (Array.isArray(obj)) {
-    return obj.map(item => convertDatesToObjects(item));
+    return obj.map((item) => convertDatesToObjects(item));
   }
-  
+
   if (typeof obj === 'object') {
     const converted: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      if ((key === 'createdAt' || key === 'updatedAt' || key.includes('Date')) && 
-          typeof value === 'string' && !isNaN(Date.parse(value))) {
+      if (
+        (key === 'createdAt' || key === 'updatedAt' || key.includes('Date')) &&
+        typeof value === 'string' &&
+        !isNaN(Date.parse(value))
+      ) {
         converted[key] = new Date(value);
       } else if (typeof value === 'object') {
         converted[key] = convertDatesToObjects(value);
@@ -305,7 +308,7 @@ function convertDatesToObjects(obj: any): any {
     }
     return converted;
   }
-  
+
   return obj;
 }
 
@@ -498,12 +501,15 @@ export const jobsApi = {
   // Delete job
   delete: async (id: string) => {
     try {
-      const result = await apiCall<{ message: string; job: any }>(`/jobs?id=${id}`, {
-        method: 'DELETE',
-      });
+      const result = await apiCall<{ message: string; job: any }>(
+        `/jobs?id=${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
       return {
         ...result,
-        job: result?.job ? convertDatesToObjects(result.job) : result?.job
+        job: result?.job ? convertDatesToObjects(result.job) : result?.job,
       };
     } catch (error) {
       console.warn('Using mock data for deleting job:', error);
@@ -904,7 +910,9 @@ export const clientsApi = {
         // Convert date strings to Date objects
         const clientsWithDates = {
           ...response,
-          clients: response.clients.map(client => convertDatesToObjects(client))
+          clients: response.clients.map((client) =>
+            convertDatesToObjects(client)
+          ),
         };
         return clientsWithDates;
       }
@@ -1358,7 +1366,7 @@ export const usersApi = {
         // Convert date strings to Date objects
         const usersWithDates = {
           ...response,
-          users: response.users.map(user => convertDatesToObjects(user))
+          users: response.users.map((user) => convertDatesToObjects(user)),
         };
         return usersWithDates;
       }
@@ -1513,7 +1521,7 @@ export const usersApi = {
       console.log('✅ Successfully deleted user:', result?.user?.name || id);
       return {
         ...result,
-        user: result?.user ? convertDatesToObjects(result.user) : result?.user
+        user: result?.user ? convertDatesToObjects(result.user) : result?.user,
       };
     } catch (error) {
       console.error('❌ Failed to delete user from database:', error);
