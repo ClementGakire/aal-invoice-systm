@@ -143,12 +143,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   Remember me
                 </label>
               </div>
-              <button
+              {/* <button
                 type="button"
                 className="text-sm text-sky-600 hover:text-sky-500"
               >
                 Forgot password?
-              </button>
+              </button> */}
             </div>
 
             {/* Submit Button */}
@@ -172,7 +172,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          {/* <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-sm font-medium text-gray-700 mb-2">
               Demo Credentials:
             </h3>
@@ -187,7 +187,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 <strong>Operations:</strong> operations@aal.com / ops123
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}
