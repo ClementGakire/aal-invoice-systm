@@ -172,7 +172,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          {/* <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-sm font-medium text-gray-700 mb-2">
               Demo Credentials:
             </h3>
@@ -190,7 +190,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 <strong>Sales:</strong> danny.sales@aal.rw / danny123
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}
