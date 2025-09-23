@@ -11,49 +11,10 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
-// Mock users for authentication
-const mockUsers: User[] = [
-  {
-    id: 'u1',
-    name: 'John Administrator',
-    email: 'admin@aal.com',
-    role: 'admin',
-    department: 'IT',
-    phone: '+1-555-0101',
-    isActive: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-  },
-  {
-    id: 'u2',
-    name: 'Sarah Finance',
-    email: 'finance@aal.com',
-    role: 'finance',
-    department: 'Finance',
-    phone: '+1-555-0102',
-    isActive: true,
-    createdAt: new Date('2024-01-02'),
-    updatedAt: new Date('2024-01-02'),
-  },
-  {
-    id: 'u3',
-    name: 'Mike Operations',
-    email: 'operations@aal.com',
-    role: 'operations',
-    department: 'Operations',
-    phone: '+1-555-0103',
-    isActive: true,
-    createdAt: new Date('2024-01-03'),
-    updatedAt: new Date('2024-01-03'),
-  },
-];
-
-// Mock password validation
-const mockPasswords: Record<string, string> = {
-  'admin@aal.com': 'admin123',
-  'finance@aal.com': 'finance123',
-  'operations@aal.com': 'ops123',
-};
+const API_BASE_URL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://aal-front-end.vercel.app' // Production Vercel URL
+    : 'http://localhost:3000'; // For local development API server
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -66,13 +27,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const savedAuth = localStorage.getItem('aal_auth');
         if (savedAuth) {
-          const { user: savedUser, timestamp } = JSON.parse(savedAuth);
+          const { user: savedUser, token, timestamp } = JSON.parse(savedAuth);
 
           // Check if session is still valid (24 hours)
           const isExpired = Date.now() - timestamp > 24 * 60 * 60 * 1000;
 
-          if (!isExpired && savedUser) {
-            setUser(savedUser);
+          if (!isExpired && savedUser && token) {
+            // Convert date strings back to Date objects
+            const user: User = {
+              ...savedUser,
+              createdAt: new Date(savedUser.createdAt),
+              updatedAt: new Date(savedUser.updatedAt),
+            };
+
+            setUser(user);
             setIsAuthenticated(true);
           } else {
             // Clear expired session
@@ -92,33 +60,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log('🔐 Attempting login for:', email);
 
-      // Check credentials
-      if (mockPasswords[email] === password) {
-        const foundUser = mockUsers.find((u) => u.email === email);
+      const response = await fetch(`${API_BASE_URL}/api/auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-        if (foundUser && foundUser.isActive) {
-          setUser(foundUser);
-          setIsAuthenticated(true);
+      const data = await response.json();
 
-          // Save to localStorage
-          localStorage.setItem(
-            'aal_auth',
-            JSON.stringify({
-              user: foundUser,
-              timestamp: Date.now(),
-            })
-          );
+      if (response.ok && data.user) {
+        console.log('✅ Login successful for:', data.user.name);
 
-          return true;
-        }
+        // Convert date strings back to Date objects
+        const user: User = {
+          ...data.user,
+          createdAt: new Date(data.user.createdAt),
+          updatedAt: new Date(data.user.updatedAt),
+        };
+
+        setUser(user);
+        setIsAuthenticated(true);
+
+        // Save to localStorage
+        localStorage.setItem(
+          'aal_auth',
+          JSON.stringify({
+            user,
+            token: data.token,
+            timestamp: Date.now(),
+          })
+        );
+
+        return true;
+      } else {
+        console.log('❌ Login failed:', data.error);
+        return false;
       }
-
-      return false;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('🚨 Login error:', error);
       return false;
     }
   };

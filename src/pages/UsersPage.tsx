@@ -1,11 +1,6 @@
-import React, { useState } from 'react';
-import {
-  User,
-  usersMock,
-  addUser,
-  updateUser,
-  deleteUser,
-} from '../services/mockData';
+import React, { useState, useEffect } from 'react';
+import { User } from '../services/mockData';
+import { api } from '../services/api';
 import {
   User as UserIcon,
   Mail,
@@ -25,7 +20,8 @@ import {
 } from 'lucide-react';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>(usersMock);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
@@ -37,41 +33,52 @@ export default function UsersPage() {
     isActive: true,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load users on component mount
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.users.getAll();
+      setUsers(response.users);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingUser) {
-      // Update existing user
-      const updatedUser = {
-        ...editingUser,
-        ...formData,
-        updatedAt: new Date(),
-      };
-      updateUser(editingUser.id, updatedUser);
-      setUsers(users.map((u) => (u.id === editingUser.id ? updatedUser : u)));
-      setEditingUser(null);
-    } else {
-      // Add new user
-      const newUser: User = {
-        id: `u${Date.now()}`,
-        ...formData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      addUser(newUser);
-      setUsers([newUser, ...users]);
-    }
+    try {
+      if (editingUser) {
+        // Update existing user
+        const updatedUser = await api.users.update(editingUser.id, formData);
+        setUsers(users.map((u) => (u.id === editingUser.id ? updatedUser : u)));
+        setEditingUser(null);
+      } else {
+        // Add new user
+        const newUser = await api.users.create(formData);
+        setUsers([newUser, ...users]);
+      }
 
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      role: 'client',
-      department: '',
-      phone: '',
-      isActive: true,
-    });
-    setShowAddForm(false);
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        role: 'client',
+        department: '',
+        phone: '',
+        isActive: true,
+      });
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Failed to save user:', error);
+      alert('Failed to save user. Please try again.');
+    }
   };
 
   const handleEdit = (user: User) => {
@@ -87,10 +94,15 @@ export default function UsersPage() {
     setShowAddForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      deleteUser(id);
-      setUsers(users.filter((u) => u.id !== id));
+      try {
+        await api.users.delete(id);
+        setUsers(users.filter((u) => u.id !== id));
+      } catch (error) {
+        console.error('Failed to delete user:', error);
+        alert('Failed to delete user. Please try again.');
+      }
     }
   };
 
@@ -136,6 +148,14 @@ export default function UsersPage() {
         return UserIcon;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex justify-center items-center">
+        <div className="text-gray-600">Loading users...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -407,7 +427,7 @@ export default function UsersPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                      {user.createdAt.toLocaleDateString()}
+                      {new Date(user.createdAt).toLocaleDateString()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
