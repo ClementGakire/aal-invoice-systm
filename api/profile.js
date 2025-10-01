@@ -151,9 +151,10 @@ export default async function handler(request, response) {
         // 1. Extract the base64 data
         // 2. Upload to cloud storage (AWS S3, Cloudinary, etc.)
         // 3. Store the public URL instead
-        
+
         // Validate base64 data size (limit to ~1MB base64 = ~750KB actual image)
-        if (imageData.length > 1400000) { // ~1MB base64
+        if (imageData.length > 1400000) {
+          // ~1MB base64
           return response.status(400).json({
             error: 'Image too large. Please choose a smaller image (max 1MB).',
           });
@@ -186,7 +187,8 @@ export default async function handler(request, response) {
         } catch (dbError) {
           console.error('Database error updating profile picture:', dbError);
           return response.status(500).json({
-            error: 'Failed to save profile picture. Please try a smaller image.',
+            error:
+              'Failed to save profile picture. Please try a smaller image.',
           });
         }
 

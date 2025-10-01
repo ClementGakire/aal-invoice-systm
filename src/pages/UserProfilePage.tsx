@@ -46,7 +46,10 @@ const UserProfile: React.FC = () => {
 
       // Validate file size (max 1MB for better database performance)
       if (file.size > 1024 * 1024) {
-        setMessage({ type: 'error', text: 'Image must be less than 1MB. Please resize your image.' });
+        setMessage({
+          type: 'error',
+          text: 'Image must be less than 1MB. Please resize your image.',
+        });
         return;
       }
 
@@ -156,7 +159,11 @@ const UserProfile: React.FC = () => {
         try {
           const base64Data = e.target?.result as string;
 
-          console.log('📸 Uploading profile picture, size:', Math.round(base64Data.length / 1024), 'KB');
+          console.log(
+            '📸 Uploading profile picture, size:',
+            Math.round(base64Data.length / 1024),
+            'KB'
+          );
 
           const success = await updateProfilePicture(base64Data);
 
@@ -167,7 +174,9 @@ const UserProfile: React.FC = () => {
             });
             setProfilePictureFile(null);
             // Clear the file input
-            const fileInput = document.getElementById('profile-picture-upload') as HTMLInputElement;
+            const fileInput = document.getElementById(
+              'profile-picture-upload'
+            ) as HTMLInputElement;
             if (fileInput) fileInput.value = '';
           } else {
             setMessage({
