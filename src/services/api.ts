@@ -276,6 +276,9 @@ function convertDatesToObjects(obj: any): any {
         !isNaN(Date.parse(value))
       ) {
         converted[key] = new Date(value);
+      } else if (key === 'role' && typeof value === 'string') {
+        // Convert role to lowercase for frontend compatibility
+        converted[key] = value.toLowerCase();
       } else if (typeof value === 'object') {
         converted[key] = convertDatesToObjects(value);
       } else {
