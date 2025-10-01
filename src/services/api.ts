@@ -505,7 +505,9 @@ export const jobsApi = {
         }>(`/jobs/${jobId}/expenses`);
       } catch (error) {
         // Mock fallback: filter expenses by jobId
-        const jobExpenses = expensesMock.filter((e) => e.jobId === jobId || e.jobNumber?.includes(jobId.slice(-4)));
+        const jobExpenses = expensesMock.filter(
+          (e) => e.jobId === jobId || e.jobNumber?.includes(jobId.slice(-4))
+        );
         const totalExpenses = jobExpenses.reduce((sum, e) => sum + e.amount, 0);
         return {
           job: { id: jobId },

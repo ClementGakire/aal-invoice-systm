@@ -566,7 +566,9 @@ export function useJobExpenses(jobId: string) {
       setExpenses(result.expenses || []);
       setTotalExpenses(result.totalExpenses || 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch job expenses');
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch job expenses'
+      );
       console.error('Job Expenses API Error:', err);
     } finally {
       setLoading(false);

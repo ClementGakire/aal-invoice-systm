@@ -37,7 +37,9 @@ export default function JobsPage() {
   const [viewingJob, setViewingJob] = useState<any | null>(null);
   const [editingJob, setEditingJob] = useState<any | null>(null);
   const [loadingJobDetails, setLoadingJobDetails] = useState(false);
-  const [creatingExpenseForJob, setCreatingExpenseForJob] = useState<any | null>(null);
+  const [creatingExpenseForJob, setCreatingExpenseForJob] = useState<
+    any | null
+  >(null);
 
   const handleEditJob = async (job: any) => {
     try {
@@ -273,7 +275,8 @@ export default function JobsPage() {
                   </div>
                   <div>Document: {getPrimaryDocument(j)}</div>
                   <div className="font-medium text-green-700">
-                    Expenses: ${j.totalExpenses?.toFixed(2) || '0.00'} ({j.expenseCount || 0} items)
+                    Expenses: ${j.totalExpenses?.toFixed(2) || '0.00'} (
+                    {j.expenseCount || 0} items)
                   </div>
                 </div>
               </div>
@@ -833,7 +836,9 @@ function CreateExpenseForJobModal({
 
         <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
           <div className="text-sm">
-            <div className="font-medium text-blue-900">Job: {job.jobNumber}</div>
+            <div className="font-medium text-blue-900">
+              Job: {job.jobNumber}
+            </div>
             <div className="text-blue-700">{job.title}</div>
             <div className="text-blue-600">Client: {job.clientName}</div>
           </div>

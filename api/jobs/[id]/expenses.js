@@ -31,10 +31,10 @@ export default async function handler(request, response) {
       case 'GET':
         // Get all expenses for a specific job
         console.log('📋 Getting expenses for job:', jobId);
-        
+
         const job = await prisma.logisticsJob.findUnique({
           where: { id: jobId },
-          select: { id: true, jobNumber: true, title: true }
+          select: { id: true, jobNumber: true, title: true },
         });
 
         if (!job) {
@@ -54,7 +54,10 @@ export default async function handler(request, response) {
         });
 
         // Calculate total expenses
-        const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const totalExpenses = expenses.reduce(
+          (sum, expense) => sum + expense.amount,
+          0
+        );
 
         console.log('✅ Found expenses for job:', expenses.length);
         return response.status(200).json({
@@ -67,13 +70,8 @@ export default async function handler(request, response) {
 
       case 'POST':
         // Create a new expense for this job
-        const {
-          title,
-          amount,
-          currency,
-          supplierId,
-          supplierName,
-        } = request.body;
+        const { title, amount, currency, supplierId, supplierName } =
+          request.body;
 
         if (!title || amount === undefined) {
           return response.status(400).json({
@@ -84,7 +82,7 @@ export default async function handler(request, response) {
         // Verify the job exists
         const targetJob = await prisma.logisticsJob.findUnique({
           where: { id: jobId },
-          select: { id: true, jobNumber: true, title: true }
+          select: { id: true, jobNumber: true, title: true },
         });
 
         if (!targetJob) {
@@ -117,7 +115,10 @@ export default async function handler(request, response) {
         const updatedExpenses = await prisma.expense.findMany({
           where: { jobId: jobId },
         });
-        const updatedTotal = updatedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const updatedTotal = updatedExpenses.reduce(
+          (sum, expense) => sum + expense.amount,
+          0
+        );
 
         return response.status(201).json({
           message: 'Expense created successfully',
