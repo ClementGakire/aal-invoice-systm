@@ -28,96 +28,145 @@ interface InvoiceServiceFormProps {
   onCancel: () => void;
 }
 
-export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: InvoiceServiceFormProps) {
+export default function InvoiceServiceForm({
+  onInvoiceCreate,
+  onCancel,
+}: InvoiceServiceFormProps) {
   const { services, loading: servicesLoading } = useServices();
   const { clients } = useClients();
-  
+
   const [clientId, setClientId] = useState('');
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [invoiceDate, setInvoiceDate] = useState(
+    new Date().toISOString().split('T')[0]
+  );
   const [dueDate, setDueDate] = useState('');
   const [remarks, setRemarks] = useState('');
-  const [serviceLineItems, setServiceLineItems] = useState<ServiceLineItem[]>([]);
+  const [serviceLineItems, setServiceLineItems] = useState<ServiceLineItem[]>(
+    []
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Add a new service line item
   const addServiceLineItem = () => {
     const newId = Date.now().toString();
-    setServiceLineItems([...serviceLineItems, {
-      id: newId,
-      serviceId: '',
-      serviceName: '',
-      amount: 0,
-      currency: 'USD',
-      vatEnabled: false,
-      vatPercent: 18,
-      vatAmount: 0,
-      totalAmount: 0
-    }]);
+    setServiceLineItems([
+      ...serviceLineItems,
+      {
+        id: newId,
+        serviceId: '',
+        serviceName: '',
+        amount: 0,
+        currency: 'USD',
+        vatEnabled: false,
+        vatPercent: 18,
+        vatAmount: 0,
+        totalAmount: 0,
+      },
+    ]);
   };
 
   // Remove a service line item
   const removeServiceLineItem = (id: string) => {
-    setServiceLineItems(serviceLineItems.filter(item => item.id !== id));
+    setServiceLineItems(serviceLineItems.filter((item) => item.id !== id));
   };
 
   // Update a service line item
-  const updateServiceLineItem = (id: string, updates: Partial<ServiceLineItem>) => {
-    setServiceLineItems(serviceLineItems.map(item => {
-      if (item.id === id) {
-        const updated = { ...item, ...updates };
-        
-        // Recalculate VAT and total when amount, VAT status, or VAT percent changes
-        if (updated.vatEnabled) {
-          updated.vatAmount = (updated.amount * updated.vatPercent) / 100;
-          updated.totalAmount = updated.amount + updated.vatAmount;
-        } else {
-          updated.vatAmount = 0;
-          updated.totalAmount = updated.amount;
+  const updateServiceLineItem = (
+    id: string,
+    updates: Partial<ServiceLineItem>
+  ) => {
+    setServiceLineItems(
+      serviceLineItems.map((item) => {
+        if (item.id === id) {
+          const updated = { ...item, ...updates };
+
+          // Recalculate VAT and total when amount, VAT status, or VAT percent changes
+          if (updated.vatEnabled) {
+            updated.vatAmount = (updated.amount * updated.vatPercent) / 100;
+            updated.totalAmount = updated.amount + updated.vatAmount;
+          } else {
+            updated.vatAmount = 0;
+            updated.totalAmount = updated.amount;
+          }
+
+          return updated;
         }
-        
-        return updated;
-      }
-      return item;
-    }));
+        return item;
+      })
+    );
   };
 
   // Handle service selection
   const handleServiceSelection = (lineItemId: string, serviceId: string) => {
-    const selectedService = services?.find((s: ServiceItem) => s.id === serviceId);
+    const selectedService = services?.find(
+      (s: ServiceItem) => s.id === serviceId
+    );
     if (selectedService) {
       updateServiceLineItem(lineItemId, {
         serviceId,
         serviceName: selectedService.name,
         amount: selectedService.price,
         currency: selectedService.currency as 'USD' | 'RWF',
-        vatEnabled: selectedService.vat || false
+        vatEnabled: selectedService.vat || false,
       });
     }
   };
 
   // Calculate totals
   const calculateTotals = () => {
-    const usdItems = serviceLineItems.filter(item => item.currency === 'USD');
-    const rwfItems = serviceLineItems.filter(item => item.currency === 'RWF');
-    
+    const usdItems = serviceLineItems.filter((item) => item.currency === 'USD');
+    const rwfItems = serviceLineItems.filter((item) => item.currency === 'RWF');
+
     const usdSubTotal = usdItems.reduce((sum, item) => sum + item.amount, 0);
     const usdVatTotal = usdItems.reduce((sum, item) => sum + item.vatAmount, 0);
     const usdTotal = usdItems.reduce((sum, item) => sum + item.totalAmount, 0);
-    
+
     const rwfSubTotal = rwfItems.reduce((sum, item) => sum + item.amount, 0);
     const rwfVatTotal = rwfItems.reduce((sum, item) => sum + item.vatAmount, 0);
     const rwfTotal = rwfItems.reduce((sum, item) => sum + item.totalAmount, 0);
-    
+
     return {
       usd: { subTotal: usdSubTotal, vatTotal: usdVatTotal, total: usdTotal },
-      rwf: { subTotal: rwfSubTotal, vatTotal: rwfVatTotal, total: rwfTotal }
+      rwf: { subTotal: rwfSubTotal, vatTotal: rwfVatTotal, total: rwfTotal },
     };
   };
 
   // Convert amount to words (enhanced version)
   const numberToWords = (amount: number, currency: string): string => {
-    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    const ones = [
+      '',
+      'One',
+      'Two',
+      'Three',
+      'Four',
+      'Five',
+      'Six',
+      'Seven',
+      'Eight',
+      'Nine',
+      'Ten',
+      'Eleven',
+      'Twelve',
+      'Thirteen',
+      'Fourteen',
+      'Fifteen',
+      'Sixteen',
+      'Seventeen',
+      'Eighteen',
+      'Nineteen',
+    ];
+    const tens = [
+      '',
+      '',
+      'Twenty',
+      'Thirty',
+      'Forty',
+      'Fifty',
+      'Sixty',
+      'Seventy',
+      'Eighty',
+      'Ninety',
+    ];
     const thousands = ['', 'Thousand', 'Million', 'Billion'];
 
     if (amount === 0) return `Zero ${currency}`;
@@ -142,33 +191,38 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
 
     function convertNumber(num: number): string {
       if (num === 0) return '';
-      
+
       let result = '';
       let thousandIndex = 0;
-      
+
       while (num > 0) {
         const chunk = num % 1000;
         if (chunk !== 0) {
           const chunkText = convertHundreds(chunk);
-          result = chunkText + (thousands[thousandIndex] ? ' ' + thousands[thousandIndex] : '') + (result ? ' ' + result : '');
+          result =
+            chunkText +
+            (thousands[thousandIndex] ? ' ' + thousands[thousandIndex] : '') +
+            (result ? ' ' + result : '');
         }
         num = Math.floor(num / 1000);
         thousandIndex++;
       }
-      
+
       return result.trim();
     }
 
     const integerWords = convertNumber(integerPart);
-    const currencyName = currency === 'USD' ? 'Dollars' : currency === 'RWF' ? 'Francs' : currency;
-    const centName = currency === 'USD' ? 'Cents' : currency === 'RWF' ? 'Centimes' : 'Cents';
-    
+    const currencyName =
+      currency === 'USD' ? 'Dollars' : currency === 'RWF' ? 'Francs' : currency;
+    const centName =
+      currency === 'USD' ? 'Cents' : currency === 'RWF' ? 'Centimes' : 'Cents';
+
     let result = `${integerWords} ${currencyName}`;
     if (decimalPart > 0) {
       const decimalWords = convertNumber(decimalPart);
       result += ` And ${decimalWords} ${centName}`;
     }
-    
+
     return result;
   };
 
@@ -181,10 +235,11 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
 
     const totals = calculateTotals();
     const mainCurrency = serviceLineItems[0]?.currency || 'USD';
-    const mainTotal = mainCurrency === 'USD' ? totals.usd.total : totals.rwf.total;
-    
+    const mainTotal =
+      mainCurrency === 'USD' ? totals.usd.total : totals.rwf.total;
+
     setIsSubmitting(true);
-    
+
     try {
       const invoiceData = {
         clientId,
@@ -192,11 +247,12 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
         invoiceDate,
         dueDate: dueDate || null,
         currency: mainCurrency,
-        subTotal: mainCurrency === 'USD' ? totals.usd.subTotal : totals.rwf.subTotal,
+        subTotal:
+          mainCurrency === 'USD' ? totals.usd.subTotal : totals.rwf.subTotal,
         total: mainTotal,
         amountInWords: numberToWords(mainTotal, mainCurrency),
         remarks,
-        lineItems: serviceLineItems.map(item => ({
+        lineItems: serviceLineItems.map((item) => ({
           description: item.serviceName,
           basedOn: 'Service',
           rate: item.amount,
@@ -204,8 +260,8 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
           amount: item.amount,
           taxPercent: item.vatEnabled ? item.vatPercent : null,
           taxAmount: item.vatAmount,
-          billingAmount: item.totalAmount
-        }))
+          billingAmount: item.totalAmount,
+        })),
       };
 
       await onInvoiceCreate(invoiceData);
@@ -225,7 +281,9 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Create Invoice with Services</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Create Invoice with Services
+            </h2>
             <button
               onClick={onCancel}
               className="text-gray-400 hover:text-gray-600"
@@ -254,7 +312,7 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Invoice Date *
@@ -267,7 +325,7 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Due Date
@@ -301,12 +359,16 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
                   item={item}
                   services={services || []}
                   servicesLoading={servicesLoading}
-                  onUpdate={(updates) => updateServiceLineItem(item.id, updates)}
+                  onUpdate={(updates) =>
+                    updateServiceLineItem(item.id, updates)
+                  }
                   onRemove={() => removeServiceLineItem(item.id)}
-                  onServiceSelect={(serviceId) => handleServiceSelection(item.id, serviceId)}
+                  onServiceSelect={(serviceId) =>
+                    handleServiceSelection(item.id, serviceId)
+                  }
                 />
               ))}
-              
+
               {serviceLineItems.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   No services added yet. Click "Add Service" to get started.
@@ -320,9 +382,11 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <Calculator className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Totals Summary</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Totals Summary
+                </h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {totals.usd.total > 0 && (
                   <div className="space-y-2">
@@ -343,7 +407,7 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
                     </div>
                   </div>
                 )}
-                
+
                 {totals.rwf.total > 0 && (
                   <div className="space-y-2">
                     <h4 className="font-medium text-gray-700">RWF Totals</h4>
@@ -391,7 +455,9 @@ export default function InvoiceServiceForm({ onInvoiceCreate, onCancel }: Invoic
             </button>
             <button
               onClick={handleSubmit}
-              disabled={!clientId || serviceLineItems.length === 0 || isSubmitting}
+              disabled={
+                !clientId || serviceLineItems.length === 0 || isSubmitting
+              }
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {isSubmitting ? 'Creating Invoice...' : 'Create Invoice'}
@@ -410,7 +476,7 @@ function ServiceLineItemForm({
   servicesLoading,
   onUpdate,
   onRemove,
-  onServiceSelect
+  onServiceSelect,
 }: {
   item: ServiceLineItem;
   services: ServiceItem[];
@@ -423,10 +489,7 @@ function ServiceLineItemForm({
     <div className="p-4 border border-gray-200 rounded-lg bg-white">
       <div className="flex items-start justify-between mb-4">
         <h4 className="font-medium text-gray-900">Service Item</h4>
-        <button
-          onClick={onRemove}
-          className="text-red-500 hover:text-red-700"
-        >
+        <button onClick={onRemove} className="text-red-500 hover:text-red-700">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -461,7 +524,9 @@ function ServiceLineItemForm({
             type="number"
             step="0.01"
             value={item.amount}
-            onChange={(e) => onUpdate({ amount: parseFloat(e.target.value) || 0 })}
+            onChange={(e) =>
+              onUpdate({ amount: parseFloat(e.target.value) || 0 })
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -473,7 +538,9 @@ function ServiceLineItemForm({
           </label>
           <select
             value={item.currency}
-            onChange={(e) => onUpdate({ currency: e.target.value as 'USD' | 'RWF' })}
+            onChange={(e) =>
+              onUpdate({ currency: e.target.value as 'USD' | 'RWF' })
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="USD">USD</option>
@@ -522,7 +589,9 @@ function ServiceLineItemForm({
               type="number"
               step="0.01"
               value={item.vatPercent}
-              onChange={(e) => onUpdate({ vatPercent: parseFloat(e.target.value) || 18 })}
+              onChange={(e) =>
+                onUpdate({ vatPercent: parseFloat(e.target.value) || 18 })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -549,7 +618,9 @@ function ServiceLineItemForm({
       {!item.vatEnabled && item.amount > 0 && (
         <div className="mt-4 text-right">
           <span className="text-sm font-medium text-gray-700">Total: </span>
-          <span className="font-bold">{item.currency} {item.amount.toFixed(2)}</span>
+          <span className="font-bold">
+            {item.currency} {item.amount.toFixed(2)}
+          </span>
         </div>
       )}
     </div>
