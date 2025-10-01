@@ -86,7 +86,7 @@ function numberToWords(num: number): string {
 
 // Company configuration
 const companyConfig = {
-  name: 'Aviation Africa Ltd',
+  name: 'Aviation Africa Logistics',
   regNumber: 'R.C: Bba RJ7J',
   address: {
     line1: 'EAR Building, 2nd Floor, No 1 Giporoso',
@@ -98,7 +98,7 @@ const companyConfig = {
   watermark: '/watermark.jpeg',
   bankDetails: {
     bank: 'Bank of Kigali',
-    accountName: 'Aviation Africa Ltd',
+    accountName: 'Aviation Africa Logistics',
     accountNumber: '9030020478362',
     swiftCode: 'BKIGRWRW',
     branch: 'Head Office',
