@@ -490,6 +490,72 @@ export const jobsApi = {
       throw new Error('Job not found');
     }
   },
+
+  // Job expenses functionality
+  expenses: {
+    // Get all expenses for a specific job
+    getAll: async (jobId: string) => {
+      try {
+        return await apiCall<{
+          job: any;
+          expenses: any[];
+          totalExpenses: number;
+          count: number;
+          success: boolean;
+        }>(`/jobs/${jobId}/expenses`);
+      } catch (error) {
+        // Mock fallback: filter expenses by jobId
+        const jobExpenses = expensesMock.filter((e) => e.jobId === jobId || e.jobNumber?.includes(jobId.slice(-4)));
+        const totalExpenses = jobExpenses.reduce((sum, e) => sum + e.amount, 0);
+        return {
+          job: { id: jobId },
+          expenses: jobExpenses,
+          totalExpenses,
+          count: jobExpenses.length,
+          success: false,
+        };
+      }
+    },
+
+    // Create new expense for a specific job
+    create: async (jobId: string, expenseData: any) => {
+      try {
+        const result = await apiCall<{
+          message: string;
+          expense: any;
+          totalExpenses: number;
+          expenseCount: number;
+        }>(`/jobs/${jobId}/expenses`, {
+          method: 'POST',
+          body: JSON.stringify(expenseData),
+        });
+
+        return result;
+      } catch (error) {
+        if (FORCE_REAL_API) {
+          throw new Error(
+            `Failed to create expense for job: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`
+          );
+        }
+
+        const newExpense = {
+          ...expenseData,
+          id: generateId(),
+          jobId,
+          jobNumber: `JOB-${jobId.slice(-4)}`,
+        };
+        addExpenseMock(newExpense);
+        return {
+          message: 'Expense created successfully',
+          expense: newExpense,
+          totalExpenses: 0,
+          expenseCount: 1,
+        };
+      }
+    },
+  },
 };
 
 // Services API
