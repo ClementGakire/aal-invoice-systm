@@ -6,14 +6,11 @@ async function testDatabase() {
   });
 
   try {
-    console.log('🔍 Testing database connection...');
-    
     // Test the connection
     await prisma.$connect();
-    console.log('✅ Database connection successful!');
-    
+
     // Test client fetching
-    console.log('🔍 Fetching clients from database...');
+
     const clients = await prisma.client.findMany({
       include: {
         _count: {
@@ -24,19 +21,11 @@ async function testDatabase() {
         name: 'asc',
       },
     });
-    
-    console.log(`✅ Successfully fetched ${clients.length} clients:`);
-    clients.forEach(client => {
-      console.log(`  - ${client.name} (ID: ${client.id})`);
-      console.log(`    Address: ${client.address || 'N/A'}`);
-      console.log(`    Phone: ${client.phone || 'N/A'}`);
-      console.log(`    TIN: ${client.tin || 'N/A'}`);
-      console.log(`    Jobs: ${client._count.jobs}, Invoices: ${client._count.invoices}`);
-      console.log('');
-    });
+
+    clients.forEach((client) => {});
 
     // Test creating a new client
-    console.log('🔍 Testing client creation...');
+
     const newClient = await prisma.client.create({
       data: {
         name: 'Test Client ' + Date.now(),
@@ -45,16 +34,12 @@ async function testDatabase() {
         tin: 'TEST123456',
       },
     });
-    
-    console.log('✅ Successfully created new client:', newClient);
-    
+
     // Delete the test client
-    console.log('🔍 Cleaning up test client...');
+
     await prisma.client.delete({
       where: { id: newClient.id },
     });
-    console.log('✅ Test client deleted successfully');
-    
   } catch (error) {
     console.error('❌ Database test failed:', error);
     console.error('Error details:', {
@@ -64,7 +49,6 @@ async function testDatabase() {
     });
   } finally {
     await prisma.$disconnect();
-    console.log('🔍 Database connection closed');
   }
 }
 
