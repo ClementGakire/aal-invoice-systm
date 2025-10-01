@@ -58,8 +58,11 @@ export default function ExpensesPage() {
         expense.amount.toString().includes(searchTerm) ||
         expense.currency.toLowerCase().includes(searchTerm.toLowerCase()) ||
         expense.jobNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        expense.supplierName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (expense.job && expense.job.title?.toLowerCase().includes(searchTerm.toLowerCase()))
+        expense.supplierName
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        (expense.job &&
+          expense.job.title?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [expenses, searchTerm]);
 
@@ -137,7 +140,7 @@ export default function ExpensesPage() {
                   <div>
                     <div className="font-medium">{e.title}</div>
                     <div className="muted">
-                      {e.currency} {e.amount} • 
+                      {e.currency} {e.amount} •
                       {e.job ? (
                         <span className="text-blue-600 font-medium">
                           Job: {e.job.jobNumber} - {e.job.title}
