@@ -1,14 +1,10 @@
 // User profile management API
 import prisma from '../lib/prisma-edge.js';
-import bcrypt from 'bcryptjs';
 
 export default async function handler(request, response) {
   // Enable CORS
   response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, PUT, POST, OPTIONS'
-  );
+  response.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
   response.setHeader(
     'Access-Control-Allow-Headers',
     'Content-Type, Authorization'
@@ -26,7 +22,7 @@ export default async function handler(request, response) {
       case 'GET':
         // Get current user profile
         const { userId } = request.query;
-        
+
         if (!userId) {
           return response.status(400).json({ error: 'User ID is required' });
         }
@@ -44,7 +40,7 @@ export default async function handler(request, response) {
             isActive: true,
             createdAt: true,
             updatedAt: true,
-          }
+          },
         });
 
         if (!user) {
@@ -56,13 +52,8 @@ export default async function handler(request, response) {
       case 'PUT':
         // Update user profile
         const updateUserId = request.query.userId;
-        const { 
-          name, 
-          phone, 
-          profilePicture,
-          currentPassword,
-          newPassword 
-        } = request.body;
+        const { name, phone, profilePicture, currentPassword, newPassword } =
+          request.body;
 
         if (!updateUserId) {
           return response.status(400).json({ error: 'User ID is required' });
@@ -70,7 +61,7 @@ export default async function handler(request, response) {
 
         // Get current user data
         const currentUser = await prisma.user.findUnique({
-          where: { id: updateUserId }
+          where: { id: updateUserId },
         });
 
         if (!currentUser) {
@@ -82,26 +73,30 @@ export default async function handler(request, response) {
         // Update basic profile fields
         if (name !== undefined) updateData.name = name;
         if (phone !== undefined) updateData.phone = phone;
-        if (profilePicture !== undefined) updateData.profilePicture = profilePicture;
+        if (profilePicture !== undefined)
+          updateData.profilePicture = profilePicture;
 
         // Handle password update
         if (newPassword) {
           if (!currentPassword) {
-            return response.status(400).json({ 
-              error: 'Current password is required to set new password' 
+            return response.status(400).json({
+              error: 'Current password is required to set new password',
             });
           }
+
+          // Dynamic import bcrypt for serverless compatibility
+          const bcrypt = await import('bcryptjs');
 
           // If user has existing password, verify current password
           if (currentUser.password) {
             const isCurrentPasswordValid = await bcrypt.compare(
-              currentPassword, 
+              currentPassword,
               currentUser.password
             );
-            
+
             if (!isCurrentPasswordValid) {
-              return response.status(400).json({ 
-                error: 'Current password is incorrect' 
+              return response.status(400).json({
+                error: 'Current password is incorrect',
               });
             }
           }
@@ -126,12 +121,12 @@ export default async function handler(request, response) {
             isActive: true,
             createdAt: true,
             updatedAt: true,
-          }
+          },
         });
 
         return response.status(200).json({
           message: 'Profile updated successfully',
-          user: updatedUser
+          user: updatedUser,
         });
 
       case 'POST':
@@ -139,40 +134,61 @@ export default async function handler(request, response) {
         const { userId: uploadUserId, imageData } = request.body;
 
         if (!uploadUserId || !imageData) {
-          return response.status(400).json({ 
-            error: 'User ID and image data are required' 
+          return response.status(400).json({
+            error: 'User ID and image data are required',
           });
         }
 
-        // In a real application, you would:
-        // 1. Validate image format and size
+        // Validate image data
+        if (!imageData.startsWith('data:image/')) {
+          return response.status(400).json({
+            error: 'Invalid image format. Please provide a valid base64 image.',
+          });
+        }
+
+        // For now, we'll store the base64 data directly
+        // In production, you should:
+        // 1. Extract the base64 data
         // 2. Upload to cloud storage (AWS S3, Cloudinary, etc.)
-        // 3. Get the public URL
-        // For now, we'll simulate this by storing base64 or a URL
+        // 3. Store the public URL instead
+        
+        // Validate base64 data size (limit to ~1MB base64 = ~750KB actual image)
+        if (imageData.length > 1400000) { // ~1MB base64
+          return response.status(400).json({
+            error: 'Image too large. Please choose a smaller image (max 1MB).',
+          });
+        }
 
-        const updatedUserWithImage = await prisma.user.update({
-          where: { id: uploadUserId },
-          data: { 
-            profilePicture: imageData // This should be a URL in production
-          },
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profilePicture: true,
-            role: true,
-            department: true,
-            phone: true,
-            isActive: true,
-            createdAt: true,
-            updatedAt: true,
-          }
-        });
+        try {
+          const updatedUserWithImage = await prisma.user.update({
+            where: { id: uploadUserId },
+            data: {
+              profilePicture: imageData,
+            },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profilePicture: true,
+              role: true,
+              department: true,
+              phone: true,
+              isActive: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          });
 
-        return response.status(200).json({
-          message: 'Profile picture updated successfully',
-          user: updatedUserWithImage
-        });
+          return response.status(200).json({
+            message: 'Profile picture updated successfully',
+            user: updatedUserWithImage,
+          });
+        } catch (dbError) {
+          console.error('Database error updating profile picture:', dbError);
+          return response.status(500).json({
+            error: 'Failed to save profile picture. Please try a smaller image.',
+          });
+        }
 
       default:
         response.setHeader('Allow', ['GET', 'PUT', 'POST', 'OPTIONS']);
@@ -182,7 +198,7 @@ export default async function handler(request, response) {
     }
   } catch (error) {
     console.error('🚨 Profile API Error:', error);
-    
+
     return response.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',

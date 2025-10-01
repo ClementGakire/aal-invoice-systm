@@ -135,7 +135,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                     <ChevronDown className="w-4 h-4 text-slate-400" />
                   </button>
-                  
+
                   {showUserMenu && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-slate-200 py-1 z-50">
                       <Link

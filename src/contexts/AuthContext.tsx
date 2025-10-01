@@ -6,7 +6,12 @@ interface AuthState {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (profileData: Partial<User> & { currentPassword?: string; newPassword?: string }) => Promise<boolean>;
+  updateProfile: (
+    profileData: Partial<User> & {
+      currentPassword?: string;
+      newPassword?: string;
+    }
+  ) => Promise<boolean>;
   updateProfilePicture: (imageData: string) => Promise<boolean>;
   loading: boolean;
 }
@@ -115,7 +120,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('aal_auth');
   };
 
-  const updateProfile = async (profileData: Partial<User> & { currentPassword?: string; newPassword?: string }): Promise<boolean> => {
+  const updateProfile = async (
+    profileData: Partial<User> & {
+      currentPassword?: string;
+      newPassword?: string;
+    }
+  ): Promise<boolean> => {
     if (!user) {
       console.error('No user logged in');
       return false;
@@ -124,20 +134,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔄 Updating profile for user:', user.id);
 
-      const response = await fetch(`${API_BASE_URL}/api/profile?userId=${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(profileData),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/profile?userId=${user.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(profileData),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok && data.user) {
         console.log('✅ Profile updated successfully');
-        
+
         // Convert date strings back to Date objects
         const updatedUser: User = {
           ...data.user,
@@ -187,9 +200,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: user.id,
-          imageData 
+          imageData,
         }),
       });
 
@@ -197,7 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok && data.user) {
         console.log('✅ Profile picture updated successfully');
-        
+
         // Convert date strings back to Date objects
         const updatedUser: User = {
           ...data.user,
