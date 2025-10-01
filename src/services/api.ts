@@ -50,14 +50,12 @@ export function resetApiAvailability(): void {
 // Function to force using real API
 export function forceRealApi(force: boolean = true): void {
   FORCE_REAL_API = force;
-  console.log(`API mode: ${force ? 'FORCED REAL API' : 'AUTO-DETECT'}`);
 }
 
 // Function to test API connection
 export async function testApiConnection(): Promise<boolean> {
   try {
     resetApiAvailability();
-    console.log(`🔍 Testing API connection to ${API_BASE_URL}/api/clients`);
 
     // Make sure to specify application/json content-type explicitly
     const response = await fetch(`${API_BASE_URL}/api/clients`, {
@@ -66,16 +64,11 @@ export async function testApiConnection(): Promise<boolean> {
         Accept: 'application/json',
       },
     });
-    console.log(
-      `🔍 API response status: ${response.status} ${response.statusText}`
-    );
 
     const contentType = response.headers.get('content-type');
-    console.log(`🔍 API response content-type: ${contentType || 'none'}`);
 
     // Get the text response to enable better error handling
     const text = await response.text();
-    console.log(`🔍 API response preview: ${text.substring(0, 100)}...`);
 
     // Check if it looks like code being displayed (like the API handler itself)
     const looksLikeCode =
@@ -84,16 +77,6 @@ export async function testApiConnection(): Promise<boolean> {
       text.match(/function\s+handler\(/);
 
     if (looksLikeCode) {
-      console.error(
-        '⚠️ API is returning the source code instead of executing it!'
-      );
-      console.error(
-        '⚠️ This likely means the development server is misconfigured'
-      );
-      console.error(
-        '⚠️ Check that Vercel Dev is running correctly and handling API routes'
-      );
-
       if (!FORCE_REAL_API) {
         apiAvailable = false;
       }
@@ -106,22 +89,14 @@ export async function testApiConnection(): Promise<boolean> {
         try {
           // First try to parse it as regular JSON
           JSON.parse(text);
-          console.log('✅ API connection successful with direct JSON!');
           return true;
         } catch (e) {
           // If that fails, check if it's a base64 string
           if (isBase64(text)) {
             const decoded = atob(text);
             JSON.parse(decoded);
-            console.log(
-              '✅ API connection successful with base64-encoded JSON!'
-            );
             return true;
           } else {
-            console.log(
-              '❌ API returned invalid format',
-              text.substring(0, 100)
-            );
             if (!FORCE_REAL_API) {
               apiAvailable = false;
             }
@@ -129,21 +104,18 @@ export async function testApiConnection(): Promise<boolean> {
           }
         }
       } catch (parseError) {
-        console.log('❌ API returned unparsable content');
         if (!FORCE_REAL_API) {
           apiAvailable = false;
         }
         return false;
       }
     } else {
-      console.log('❌ API returned HTML instead of JSON');
       if (!FORCE_REAL_API) {
         apiAvailable = false;
       }
       return false;
     }
   } catch (error) {
-    console.log('❌ API connection failed:', error);
     if (!FORCE_REAL_API) {
       apiAvailable = false;
     }
@@ -178,11 +150,6 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     ...(options?.headers || {}),
   };
 
-  console.log(
-    `API Request: ${options?.method || 'GET'} ${url}`,
-    options?.body ? `Body: ${options.body}` : ''
-  );
-
   try {
     const response = await fetch(url, mergedOptions);
 
@@ -202,11 +169,6 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
       responsePreview.match(/function\s+handler\(/);
 
     if (looksLikeCode) {
-      console.error(
-        'API is returning the source code instead of executing it!'
-      );
-      console.error('Response preview:', responsePreview);
-
       if (!FORCE_REAL_API) {
         apiAvailable = false;
       }
@@ -216,10 +178,6 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     }
 
     if (!contentType || !contentType.includes('application/json')) {
-      console.warn('API returned non-JSON response, marking as unavailable');
-      console.warn('Response content-type:', contentType);
-      console.warn('Response preview:', responsePreview);
-
       if (!FORCE_REAL_API) {
         apiAvailable = false;
       }
@@ -231,10 +189,34 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     if (!response.ok) {
       try {
         const errorData = JSON.parse(text);
-        throw new Error(
-          errorData.error || `HTTP ${response.status}: ${response.statusText}`
-        );
+        // Include details if available (e.g., for client deletion with existing records)
+        let errorMessage =
+          errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+
+        if (errorData.details) {
+          // Format details in a user-friendly way
+          if (typeof errorData.details === 'object') {
+            const detailsParts = [];
+            if (errorData.details.jobs !== undefined) {
+              detailsParts.push(`${errorData.details.jobs} job(s)`);
+            }
+            if (errorData.details.invoices !== undefined) {
+              detailsParts.push(`${errorData.details.invoices} invoice(s)`);
+            }
+            if (detailsParts.length > 0) {
+              errorMessage += ` (${detailsParts.join(', ')})`;
+            }
+          } else {
+            errorMessage += ` - ${errorData.details}`;
+          }
+        }
+
+        throw new Error(errorMessage);
       } catch (e) {
+        // If JSON parsing fails, check if e is already an Error we threw
+        if (e instanceof Error && e.message.includes('Cannot delete client')) {
+          throw e;
+        }
         throw new Error(
           `HTTP ${response.status}: ${response.statusText} - Invalid JSON response`
         );
@@ -252,19 +234,13 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
           const decoded = atob(text);
           return JSON.parse(decoded) as T;
         } catch (e2) {
-          console.error('Failed to decode base64 response', e2);
           throw new Error('Invalid API response format');
         }
       } else {
-        console.error(
-          'Response is not valid JSON or base64',
-          text.substring(0, 100)
-        );
         throw new Error('Invalid API response format');
       }
     }
   } catch (error) {
-    console.warn('API call failed:', error);
     if (!FORCE_REAL_API) {
       apiAvailable = false;
     }
@@ -324,7 +300,6 @@ export const invoiceApi = {
     try {
       return await apiCall<{ invoices: any[]; total: number }>('/invoices');
     } catch (error) {
-      console.warn('Using mock data for invoices:', error);
       return { invoices: invoicesMock, total: invoicesMock.length };
     }
   },
@@ -334,7 +309,6 @@ export const invoiceApi = {
     try {
       return await apiCall<any>(`/invoices?id=${id}`);
     } catch (error) {
-      console.warn('Using mock data for invoice by ID:', error);
       const invoice = invoicesMock.find((i) => i.id === id);
       if (!invoice) throw new Error('Invoice not found');
       return invoice;
@@ -353,7 +327,6 @@ export const invoiceApi = {
       const invoice = result?.invoice || result;
       return invoice;
     } catch (error) {
-      console.warn('Using mock data for creating invoice:', error);
       const newInvoice = { ...invoiceData, id: generateId() };
       addInvoiceMock(newInvoice);
       return newInvoice;
@@ -372,7 +345,6 @@ export const invoiceApi = {
       const invoice = result?.invoice || result;
       return invoice;
     } catch (error) {
-      console.warn('Using mock data for updating invoice:', error);
       updateInvoiceMock(id, invoiceData);
       return { ...invoiceData, id };
     }
@@ -388,7 +360,6 @@ export const invoiceApi = {
         }
       );
     } catch (error) {
-      console.warn('Using mock data for deleting invoice:', error);
       const invoice = invoicesMock.find((i) => i.id === id);
       if (invoice) {
         deleteInvoiceMock(id);
@@ -420,7 +391,6 @@ export const jobsApi = {
         endpoint
       );
     } catch (error) {
-      console.warn('Using mock data for jobs:', error);
       let filteredJobs = [...jobsMock];
 
       // Apply filters to mock data
@@ -454,7 +424,6 @@ export const jobsApi = {
       const response = await apiCall<any>(`/jobs?id=${id}`);
       return convertDatesToObjects(response);
     } catch (error) {
-      console.warn('Using mock data for job by ID:', error);
       const job = jobsMock.find((j) => j.id === id);
       if (!job) throw new Error('Job not found');
       return job;
@@ -473,7 +442,6 @@ export const jobsApi = {
       const job = result?.job || result;
       return convertDatesToObjects(job);
     } catch (error) {
-      console.warn('Using mock data for creating job:', error);
       const newJob = { ...jobData, id: generateId() };
       addJobMock(newJob);
       return newJob;
@@ -492,7 +460,6 @@ export const jobsApi = {
       const job = result?.job || result;
       return convertDatesToObjects(job);
     } catch (error) {
-      console.warn('Using mock data for updating job:', error);
       updateJobMock(id, jobData);
       return { ...jobData, id };
     }
@@ -512,7 +479,6 @@ export const jobsApi = {
         job: result?.job ? convertDatesToObjects(result.job) : result?.job,
       };
     } catch (error) {
-      console.warn('Using mock data for deleting job:', error);
       const job = jobsMock.find((j) => j.id === id);
       if (job) {
         deleteJobMock(id);
@@ -528,15 +494,8 @@ export const servicesApi = {
   // Get all services
   getAll: async () => {
     try {
-      console.log('🔍 Fetching services from database...');
       const response = await apiCall<{ services: any[]; total: number }>(
         '/services'
-      );
-
-      console.log(
-        `✅ Successfully fetched ${
-          response?.services?.length || 0
-        } services from database`
       );
 
       // The API response should have the correct structure: { services: [], total: number }
@@ -547,8 +506,6 @@ export const servicesApi = {
       // If response is malformed, throw an error to trigger fallback
       throw new Error('Invalid response format from API');
     } catch (error) {
-      console.error('❌ Failed to fetch services from database:', error);
-
       if (FORCE_REAL_API) {
         // When forcing real API, don't fall back to mock data - throw the error
         throw new Error(
@@ -558,7 +515,6 @@ export const servicesApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for services');
       return { services: servicesMock, total: servicesMock.length };
     }
   },
@@ -566,13 +522,7 @@ export const servicesApi = {
   // Get service by ID
   getById: async (id: string) => {
     try {
-      console.log(`🔍 Fetching service ${id} from database...`);
       const response = await apiCall<any>(`/services?id=${id}`);
-
-      console.log(
-        '✅ Successfully fetched service by ID:',
-        response?.name || 'Unknown'
-      );
 
       // The API should return the service object directly
       if (response && response.id) {
@@ -581,8 +531,6 @@ export const servicesApi = {
 
       throw new Error('Service not found or invalid response format');
     } catch (error) {
-      console.error('❌ Failed to fetch service by ID from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to get service: ${
@@ -591,7 +539,6 @@ export const servicesApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for service by ID');
       const service = servicesMock.find((s) => s.id === id);
       if (!service) throw new Error('Service not found');
       return service;
@@ -601,10 +548,6 @@ export const servicesApi = {
   // Create new service
   create: async (serviceData: any) => {
     try {
-      console.log(
-        '📝 Creating new service in database:',
-        serviceData.name || 'Unknown name'
-      );
       const result = await apiCall<any>('/services', {
         method: 'POST',
         body: JSON.stringify(serviceData),
@@ -612,14 +555,8 @@ export const servicesApi = {
 
       // Extract the service object from the API response
       const service = result?.service || result;
-      console.log(
-        '✅ Successfully created service:',
-        service?.name || 'Unknown'
-      );
       return service;
     } catch (error) {
-      console.error('❌ Failed to create service in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to create service: ${
@@ -628,7 +565,6 @@ export const servicesApi = {
         );
       }
 
-      console.warn('⚠️ Creating service in mock data only (fallback)');
       const newService = { ...serviceData, id: generateId() };
       addServiceMock(newService);
       return newService;
@@ -638,7 +574,6 @@ export const servicesApi = {
   // Update service
   update: async (id: string, serviceData: any) => {
     try {
-      console.log(`🔄 Updating service ${id} in database...`);
       const result = await apiCall<any>(`/services?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(serviceData),
@@ -646,14 +581,8 @@ export const servicesApi = {
 
       // Extract the service object from the API response
       const service = result?.service || result;
-      console.log(
-        '✅ Successfully updated service:',
-        service?.name || 'Unknown'
-      );
       return service;
     } catch (error) {
-      console.error('❌ Failed to update service in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to update service: ${
@@ -662,7 +591,6 @@ export const servicesApi = {
         );
       }
 
-      console.warn('⚠️ Updating service in mock data only (fallback)');
       updateServiceMock(id, serviceData);
       return { ...serviceData, id };
     }
@@ -671,7 +599,6 @@ export const servicesApi = {
   // Delete service
   delete: async (id: string) => {
     try {
-      console.log(`🗑️ Deleting service ${id} from database...`);
       const result = await apiCall<{ message: string; service: any }>(
         `/services?id=${id}`,
         {
@@ -679,14 +606,8 @@ export const servicesApi = {
         }
       );
 
-      console.log(
-        '✅ Successfully deleted service:',
-        result?.service?.name || id
-      );
       return result;
     } catch (error) {
-      console.error('❌ Failed to delete service from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to delete service: ${
@@ -695,7 +616,6 @@ export const servicesApi = {
         );
       }
 
-      console.warn('⚠️ Deleting service from mock data only (fallback)');
       const service = servicesMock.find((s) => s.id === id);
       if (service) {
         deleteServiceMock(id);
@@ -711,15 +631,8 @@ export const expensesApi = {
   // Get all expenses
   getAll: async () => {
     try {
-      console.log('🔍 Fetching expenses from database...');
       const response = await apiCall<{ expenses: any[]; total: number }>(
         '/expenses'
-      );
-
-      console.log(
-        `✅ Successfully fetched ${
-          response?.expenses?.length || 0
-        } expenses from database`
       );
 
       // The API response should have the correct structure: { expenses: [], total: number }
@@ -730,8 +643,6 @@ export const expensesApi = {
       // If response is malformed, throw an error to trigger fallback
       throw new Error('Invalid response format from API');
     } catch (error) {
-      console.error('❌ Failed to fetch expenses from database:', error);
-
       if (FORCE_REAL_API) {
         // When forcing real API, don't fall back to mock data - throw the error
         throw new Error(
@@ -741,7 +652,6 @@ export const expensesApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for expenses');
       return { expenses: expensesMock, total: expensesMock.length };
     }
   },
@@ -749,13 +659,7 @@ export const expensesApi = {
   // Get expense by ID
   getById: async (id: string) => {
     try {
-      console.log(`🔍 Fetching expense ${id} from database...`);
       const response = await apiCall<any>(`/expenses?id=${id}`);
-
-      console.log(
-        '✅ Successfully fetched expense by ID:',
-        response?.title || 'Unknown'
-      );
 
       // The API should return the expense object directly
       if (response && response.id) {
@@ -764,8 +668,6 @@ export const expensesApi = {
 
       throw new Error('Expense not found or invalid response format');
     } catch (error) {
-      console.error('❌ Failed to fetch expense by ID from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to get expense: ${
@@ -774,7 +676,6 @@ export const expensesApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for expense by ID');
       const expense = expensesMock.find((e) => e.id === id);
       if (!expense) throw new Error('Expense not found');
       return expense;
@@ -784,10 +685,6 @@ export const expensesApi = {
   // Create new expense
   create: async (expenseData: any) => {
     try {
-      console.log(
-        '📝 Creating new expense in database:',
-        expenseData.title || 'Unknown title'
-      );
       const result = await apiCall<any>('/expenses', {
         method: 'POST',
         body: JSON.stringify(expenseData),
@@ -795,14 +692,8 @@ export const expensesApi = {
 
       // Extract the expense object from the API response
       const expense = result?.expense || result;
-      console.log(
-        '✅ Successfully created expense:',
-        expense?.title || 'Unknown'
-      );
       return expense;
     } catch (error) {
-      console.error('❌ Failed to create expense in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to create expense: ${
@@ -811,7 +702,6 @@ export const expensesApi = {
         );
       }
 
-      console.warn('⚠️ Creating expense in mock data only (fallback)');
       const newExpense = { ...expenseData, id: generateId() };
       addExpenseMock(newExpense);
       return newExpense;
@@ -821,7 +711,6 @@ export const expensesApi = {
   // Update expense
   update: async (id: string, expenseData: any) => {
     try {
-      console.log(`🔄 Updating expense ${id} in database...`);
       const result = await apiCall<any>(`/expenses?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(expenseData),
@@ -829,14 +718,8 @@ export const expensesApi = {
 
       // Extract the expense object from the API response
       const expense = result?.expense || result;
-      console.log(
-        '✅ Successfully updated expense:',
-        expense?.title || 'Unknown'
-      );
       return expense;
     } catch (error) {
-      console.error('❌ Failed to update expense in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to update expense: ${
@@ -845,7 +728,6 @@ export const expensesApi = {
         );
       }
 
-      console.warn('⚠️ Updating expense in mock data only (fallback)');
       updateExpenseMock(id, expenseData);
       return { ...expenseData, id };
     }
@@ -854,7 +736,6 @@ export const expensesApi = {
   // Delete expense
   delete: async (id: string) => {
     try {
-      console.log(`🗑️ Deleting expense ${id} from database...`);
       const result = await apiCall<{ message: string; expense: any }>(
         `/expenses?id=${id}`,
         {
@@ -862,14 +743,8 @@ export const expensesApi = {
         }
       );
 
-      console.log(
-        '✅ Successfully deleted expense:',
-        result?.expense?.title || id
-      );
       return result;
     } catch (error) {
-      console.error('❌ Failed to delete expense from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to delete expense: ${
@@ -878,7 +753,6 @@ export const expensesApi = {
         );
       }
 
-      console.warn('⚠️ Deleting expense from mock data only (fallback)');
       const expense = expensesMock.find((e) => e.id === id);
       if (expense) {
         deleteExpenseMock(id);
@@ -894,15 +768,8 @@ export const clientsApi = {
   // Get all clients
   getAll: async () => {
     try {
-      console.log('🔍 Fetching clients from database...');
       const response = await apiCall<{ clients: any[]; total: number }>(
         '/clients'
-      );
-
-      console.log(
-        `✅ Successfully fetched ${
-          response?.clients?.length || 0
-        } clients from database`
       );
 
       // The API response should have the correct structure: { clients: [], total: number }
@@ -920,8 +787,6 @@ export const clientsApi = {
       // If response is malformed, throw an error to trigger fallback
       throw new Error('Invalid response format from API');
     } catch (error) {
-      console.error('❌ Failed to fetch clients from database:', error);
-
       if (FORCE_REAL_API) {
         // When forcing real API, don't fall back to mock data - throw the error
         throw new Error(
@@ -931,7 +796,6 @@ export const clientsApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for clients');
       return { clients: clientsMock, total: clientsMock.length };
     }
   },
@@ -939,13 +803,7 @@ export const clientsApi = {
   // Get client by ID
   getById: async (id: string) => {
     try {
-      console.log(`🔍 Fetching client ${id} from database...`);
       const response = await apiCall<any>(`/clients?id=${id}`);
-
-      console.log(
-        '✅ Successfully fetched client by ID:',
-        response?.name || 'Unknown'
-      );
 
       // The API should return the client object directly
       if (response && response.id) {
@@ -954,8 +812,6 @@ export const clientsApi = {
 
       throw new Error('Client not found or invalid response format');
     } catch (error) {
-      console.error('❌ Failed to fetch client by ID from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to get client: ${
@@ -964,7 +820,6 @@ export const clientsApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for client by ID');
       const client = clientsMock.find((c) => c.id === id);
       if (!client) throw new Error('Client not found');
       return client;
@@ -974,10 +829,6 @@ export const clientsApi = {
   // Create new client
   create: async (clientData: any) => {
     try {
-      console.log(
-        '📝 Creating new client in database:',
-        clientData.name || 'Unknown name'
-      );
       const result = await apiCall<any>('/clients', {
         method: 'POST',
         body: JSON.stringify(clientData),
@@ -985,11 +836,8 @@ export const clientsApi = {
 
       // Extract the client object from the API response
       const client = result?.client || result;
-      console.log('✅ Successfully created client:', client?.name || 'Unknown');
       return convertDatesToObjects(client);
     } catch (error) {
-      console.error('❌ Failed to create client in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to create client: ${
@@ -998,7 +846,6 @@ export const clientsApi = {
         );
       }
 
-      console.warn('⚠️ Creating client in mock data only (fallback)');
       const newClient = { ...clientData, id: generateId() };
       addClientMock(newClient);
       return newClient;
@@ -1008,7 +855,6 @@ export const clientsApi = {
   // Update client
   update: async (id: string, clientData: any) => {
     try {
-      console.log(`🔄 Updating client ${id} in database...`);
       const result = await apiCall<any>(`/clients?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(clientData),
@@ -1016,11 +862,8 @@ export const clientsApi = {
 
       // Extract the client object from the API response
       const client = result?.client || result;
-      console.log('✅ Successfully updated client:', client?.name || 'Unknown');
       return convertDatesToObjects(client);
     } catch (error) {
-      console.error('❌ Failed to update client in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to update client: ${
@@ -1029,7 +872,6 @@ export const clientsApi = {
         );
       }
 
-      console.warn('⚠️ Updating client in mock data only (fallback)');
       updateClientMock(id, clientData);
       return { ...clientData, id };
     }
@@ -1038,7 +880,6 @@ export const clientsApi = {
   // Delete client
   delete: async (id: string) => {
     try {
-      console.log(`🗑️ Deleting client ${id} from database...`);
       const result = await apiCall<{ message: string; client: any }>(
         `/clients?id=${id}`,
         {
@@ -1046,14 +887,8 @@ export const clientsApi = {
         }
       );
 
-      console.log(
-        '✅ Successfully deleted client:',
-        result?.client?.name || id
-      );
       return result;
     } catch (error) {
-      console.error('❌ Failed to delete client from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to delete client: ${
@@ -1062,7 +897,6 @@ export const clientsApi = {
         );
       }
 
-      console.warn('⚠️ Deleting client from mock data only (fallback)');
       const client = clientsMock.find((c) => c.id === id);
       if (client) {
         deleteClientMock(id);
@@ -1089,7 +923,6 @@ export const dashboardApi = {
   // Get dashboard analytics data
   getAnalytics: async () => {
     try {
-      console.log('📊 Fetching dashboard analytics from database...');
       const response = await apiCall<{
         metrics: {
           totalClients: number;
@@ -1111,21 +944,12 @@ export const dashboardApi = {
         success: boolean;
       }>('/dashboard');
 
-      console.log('✅ Successfully fetched dashboard analytics');
-      console.log(
-        '📊 Revenue calculated:',
-        response?.metrics?.totalRevenue || 0
-      );
-      console.log('💰 Net revenue:', response?.metrics?.netRevenue || 0);
-
       if (response && response.success) {
         return response;
       }
 
       throw new Error('Invalid response format from dashboard API');
     } catch (error) {
-      console.error('❌ Failed to fetch dashboard analytics:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Dashboard API Error: ${
@@ -1134,7 +958,6 @@ export const dashboardApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for dashboard');
       // Return mock data structure if API fails
       return {
         metrics: {
@@ -1165,15 +988,8 @@ export const suppliersApi = {
   // Get all suppliers
   getAll: async () => {
     try {
-      console.log('🔍 Fetching suppliers from database...');
       const response = await apiCall<{ suppliers: any[]; total: number }>(
         '/suppliers'
-      );
-
-      console.log(
-        `✅ Successfully fetched ${
-          response?.suppliers?.length || 0
-        } suppliers from database`
       );
 
       // The API response should have the correct structure: { suppliers: [], total: number }
@@ -1184,8 +1000,6 @@ export const suppliersApi = {
       // If response is malformed, throw an error to trigger fallback
       throw new Error('Invalid response format from API');
     } catch (error) {
-      console.error('❌ Failed to fetch suppliers from database:', error);
-
       if (FORCE_REAL_API) {
         // When forcing real API, don't fall back to mock data - throw the error
         throw new Error(
@@ -1195,7 +1009,6 @@ export const suppliersApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for suppliers');
       // Note: Using empty array since suppliers don't have mock data yet
       return { suppliers: [], total: 0 };
     }
@@ -1204,13 +1017,7 @@ export const suppliersApi = {
   // Get supplier by ID
   getById: async (id: string) => {
     try {
-      console.log(`🔍 Fetching supplier ${id} from database...`);
       const response = await apiCall<any>(`/suppliers?id=${id}`);
-
-      console.log(
-        '✅ Successfully fetched supplier by ID:',
-        response?.name || 'Unknown'
-      );
 
       // The API should return the supplier object directly
       if (response && response.id) {
@@ -1219,8 +1026,6 @@ export const suppliersApi = {
 
       throw new Error('Supplier not found or invalid response format');
     } catch (error) {
-      console.error('❌ Failed to fetch supplier by ID from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to get supplier: ${
@@ -1229,7 +1034,6 @@ export const suppliersApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to empty for supplier by ID');
       throw new Error('Supplier not found');
     }
   },
@@ -1237,10 +1041,6 @@ export const suppliersApi = {
   // Create new supplier
   create: async (supplierData: any) => {
     try {
-      console.log(
-        '📝 Creating new supplier in database:',
-        supplierData.name || 'Unknown name'
-      );
       const result = await apiCall<any>('/suppliers', {
         method: 'POST',
         body: JSON.stringify(supplierData),
@@ -1248,14 +1048,8 @@ export const suppliersApi = {
 
       // Extract the supplier object from the API response
       const supplier = result?.supplier || result;
-      console.log(
-        '✅ Successfully created supplier:',
-        supplier?.name || 'Unknown'
-      );
       return supplier;
     } catch (error) {
-      console.error('❌ Failed to create supplier in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to create supplier: ${
@@ -1264,7 +1058,6 @@ export const suppliersApi = {
         );
       }
 
-      console.warn('⚠️ Creating supplier failed - no mock fallback');
       throw new Error('Failed to create supplier');
     }
   },
@@ -1272,7 +1065,6 @@ export const suppliersApi = {
   // Update supplier
   update: async (id: string, supplierData: any) => {
     try {
-      console.log(`🔄 Updating supplier ${id} in database...`);
       const result = await apiCall<any>(`/suppliers?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(supplierData),
@@ -1280,14 +1072,8 @@ export const suppliersApi = {
 
       // Extract the supplier object from the API response
       const supplier = result?.supplier || result;
-      console.log(
-        '✅ Successfully updated supplier:',
-        supplier?.name || 'Unknown'
-      );
       return supplier;
     } catch (error) {
-      console.error('❌ Failed to update supplier in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to update supplier: ${
@@ -1296,7 +1082,6 @@ export const suppliersApi = {
         );
       }
 
-      console.warn('⚠️ Updating supplier failed - no mock fallback');
       throw new Error('Failed to update supplier');
     }
   },
@@ -1304,7 +1089,6 @@ export const suppliersApi = {
   // Delete supplier
   delete: async (id: string) => {
     try {
-      console.log(`🗑️ Deleting supplier ${id} from database...`);
       const result = await apiCall<{ message: string; supplier: any }>(
         `/suppliers?id=${id}`,
         {
@@ -1312,14 +1096,8 @@ export const suppliersApi = {
         }
       );
 
-      console.log(
-        '✅ Successfully deleted supplier:',
-        result?.supplier?.name || id
-      );
       return result;
     } catch (error) {
-      console.error('❌ Failed to delete supplier from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to delete supplier: ${
@@ -1328,7 +1106,6 @@ export const suppliersApi = {
         );
       }
 
-      console.warn('⚠️ Deleting supplier failed - no mock fallback');
       throw new Error('Failed to delete supplier');
     }
   },
@@ -1339,8 +1116,6 @@ export const usersApi = {
   // Get all users with optional filters
   getAll: async (filters?: { role?: string; isActive?: boolean }) => {
     try {
-      console.log('🔍 Fetching users from database...');
-
       const params = new URLSearchParams();
       if (filters?.role) params.append('role', filters.role);
       if (filters?.isActive !== undefined)
@@ -1355,12 +1130,6 @@ export const usersApi = {
         filters: any;
       }>(endpoint);
 
-      console.log(
-        `✅ Successfully fetched ${
-          response?.users?.length || 0
-        } users from database`
-      );
-
       // The API response should have the correct structure: { users: [], total: number }
       if (response && Array.isArray(response.users)) {
         // Convert date strings to Date objects
@@ -1374,8 +1143,6 @@ export const usersApi = {
       // If response is malformed, throw an error to trigger fallback
       throw new Error('Invalid response format from API');
     } catch (error) {
-      console.error('❌ Failed to fetch users from database:', error);
-
       if (FORCE_REAL_API) {
         // When forcing real API, don't fall back to mock data - throw the error
         throw new Error(
@@ -1384,8 +1151,6 @@ export const usersApi = {
           }`
         );
       }
-
-      console.warn('⚠️ Falling back to mock data for users');
 
       // Apply filters to mock data
       let filteredUsers = [...usersMock];
@@ -1411,13 +1176,7 @@ export const usersApi = {
   // Get user by ID
   getById: async (id: string) => {
     try {
-      console.log(`🔍 Fetching user ${id} from database...`);
       const response = await apiCall<any>(`/users?id=${id}`);
-
-      console.log(
-        '✅ Successfully fetched user by ID:',
-        response?.name || 'Unknown'
-      );
 
       // The API should return the user object directly
       if (response && response.id) {
@@ -1426,8 +1185,6 @@ export const usersApi = {
 
       throw new Error('User not found or invalid response format');
     } catch (error) {
-      console.error('❌ Failed to fetch user by ID from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to get user: ${
@@ -1436,7 +1193,6 @@ export const usersApi = {
         );
       }
 
-      console.warn('⚠️ Falling back to mock data for user by ID');
       const user = usersMock.find((u) => u.id === id);
       if (!user) throw new Error('User not found');
       return user;
@@ -1446,10 +1202,6 @@ export const usersApi = {
   // Create new user
   create: async (userData: any) => {
     try {
-      console.log(
-        '📝 Creating new user in database:',
-        userData.name || 'Unknown name'
-      );
       const result = await apiCall<any>('/users', {
         method: 'POST',
         body: JSON.stringify(userData),
@@ -1457,11 +1209,8 @@ export const usersApi = {
 
       // Extract the user object from the API response
       const user = result?.user || result;
-      console.log('✅ Successfully created user:', user?.name || 'Unknown');
       return convertDatesToObjects(user);
     } catch (error) {
-      console.error('❌ Failed to create user in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to create user: ${
@@ -1470,7 +1219,6 @@ export const usersApi = {
         );
       }
 
-      console.warn('⚠️ Creating user in mock data only (fallback)');
       const newUser = { ...userData, id: generateId() };
       addUserMock(newUser);
       return newUser;
@@ -1480,7 +1228,6 @@ export const usersApi = {
   // Update user
   update: async (id: string, userData: any) => {
     try {
-      console.log(`🔄 Updating user ${id} in database...`);
       const result = await apiCall<any>(`/users?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(userData),
@@ -1488,11 +1235,8 @@ export const usersApi = {
 
       // Extract the user object from the API response
       const user = result?.user || result;
-      console.log('✅ Successfully updated user:', user?.name || 'Unknown');
       return convertDatesToObjects(user);
     } catch (error) {
-      console.error('❌ Failed to update user in database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to update user: ${
@@ -1501,7 +1245,6 @@ export const usersApi = {
         );
       }
 
-      console.warn('⚠️ Updating user in mock data only (fallback)');
       updateUserMock(id, userData);
       return { ...userData, id };
     }
@@ -1510,7 +1253,6 @@ export const usersApi = {
   // Delete user
   delete: async (id: string) => {
     try {
-      console.log(`🗑️ Deleting user ${id} from database...`);
       const result = await apiCall<{ message: string; user: any }>(
         `/users?id=${id}`,
         {
@@ -1518,14 +1260,11 @@ export const usersApi = {
         }
       );
 
-      console.log('✅ Successfully deleted user:', result?.user?.name || id);
       return {
         ...result,
         user: result?.user ? convertDatesToObjects(result.user) : result?.user,
       };
     } catch (error) {
-      console.error('❌ Failed to delete user from database:', error);
-
       if (FORCE_REAL_API) {
         throw new Error(
           `Failed to delete user: ${
@@ -1534,7 +1273,6 @@ export const usersApi = {
         );
       }
 
-      console.warn('⚠️ Deleting user from mock data only (fallback)');
       const user = usersMock.find((u) => u.id === id);
       if (user) {
         deleteUserMock(id);
@@ -1566,7 +1304,6 @@ export const api = {
           '/base64test/text'
         );
       } catch (error) {
-        console.warn('Base64 text test failed:', error);
         return {
           base64Data: btoa('This is a test string encoded in base64'),
           decodedText: 'This is a test string encoded in base64',
@@ -1579,7 +1316,6 @@ export const api = {
       try {
         return await apiCall<{ base64Data: string }>('/base64test/image');
       } catch (error) {
-        console.warn('Base64 image test failed:', error);
         // Return a small base64 encoded 1x1 pixel image
         return {
           base64Data:
@@ -1596,7 +1332,6 @@ export const api = {
           body: JSON.stringify(data),
         });
       } catch (error) {
-        console.warn('Base64 decode test failed:', error);
         try {
           return { decodedText: atob(data.base64string) };
         } catch (e) {

@@ -304,6 +304,15 @@ export default function JobsPage() {
             </div>
           </div>
         ))}
+        {filteredJobs.length === 0 && !searchTerm && jobs.length === 0 && (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg mb-2">No jobs yet</p>
+            <p className="text-gray-400 text-sm">
+              Click "New Logistics Job" to create your first job
+            </p>
+          </div>
+        )}
         {filteredJobs.length === 0 && searchTerm && (
           <div className="text-center py-8 text-gray-500">
             No jobs found matching "{searchTerm}"

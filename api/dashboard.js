@@ -16,8 +16,7 @@ export default async function handler(request, response) {
   }
 
   try {
-    console.log('📊 Dashboard API Request:', request.method, request.url);
-    console.log('🔗 Database URL present:', !!process.env.DATABASE_URL);
+   
 
     if (request.method !== 'GET') {
       response.setHeader('Allow', ['GET', 'OPTIONS']);
@@ -37,12 +36,7 @@ export default async function handler(request, response) {
     const startOfLast7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const startOfLast6Months = new Date(currentYear, currentMonth - 5, 1);
 
-    console.log('📅 Date ranges calculated:', {
-      startOfYear: startOfYear.toISOString(),
-      startOfMonth: startOfMonth.toISOString(),
-      startOfLast7Days: startOfLast7Days.toISOString(),
-      startOfLast6Months: startOfLast6Months.toISOString(),
-    });
+   
 
     // Fetch all required data in parallel
     const [
@@ -138,7 +132,7 @@ export default async function handler(request, response) {
       }),
     ]);
 
-    console.log('📊 Data fetched successfully');
+
 
     // Calculate revenue (total paid invoices - total expenses)
     const totalRevenue = paidInvoices.reduce(
@@ -286,8 +280,7 @@ export default async function handler(request, response) {
       success: true,
     };
 
-    console.log('✅ Dashboard data compiled successfully');
-    console.log('📊 Metrics summary:', dashboardData.metrics);
+
 
     return response.status(200).json(dashboardData);
   } catch (error) {

@@ -344,6 +344,17 @@ export default function InvoicesPage() {
             </div>
           );
         })}
+        {filteredInvoices.length === 0 &&
+          !searchTerm &&
+          invoices.length === 0 && (
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg mb-2">No invoices yet</p>
+              <p className="text-gray-400 text-sm">
+                Click "New Invoice" to create your first invoice
+              </p>
+            </div>
+          )}
         {filteredInvoices.length === 0 && searchTerm && (
           <div className="text-center py-8 text-gray-500">
             No invoices found matching "{searchTerm}"

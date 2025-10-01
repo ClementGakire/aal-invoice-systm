@@ -128,12 +128,40 @@ export default async function handler(request, response) {
           return response.status(400).json({ error: 'Client ID is required' });
         }
 
+        // Check if client has related invoices or jobs
+        const clientWithRelations = await prisma.client.findUnique({
+          where: { id: deleteId },
+          include: {
+            _count: {
+              select: { jobs: true, invoices: true },
+            },
+          },
+        });
+
+        if (!clientWithRelations) {
+          return response.status(404).json({ error: 'Client not found' });
+        }
+
+        // Prevent deletion if client has related records
+        if (
+          clientWithRelations._count.jobs > 0 ||
+          clientWithRelations._count.invoices > 0
+        ) {
+          return response.status(400).json({
+            error: 'Cannot delete client with existing jobs or invoices',
+            details: {
+              jobs: clientWithRelations._count.jobs,
+              invoices: clientWithRelations._count.invoices,
+            },
+          });
+        }
+
         const deletedClient = await prisma.client.delete({
           where: { id: deleteId }, // Use string ID directly, not parseInt
         });
 
         return response.status(200).json({
-          message: 'Client deleted',
+          message: 'Client deleted successfully',
           client: deletedClient,
         });
 
@@ -156,6 +184,20 @@ export default async function handler(request, response) {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : 'No stack trace',
     });
+
+    // Check if this is a Prisma error related to foreign key constraints
+    if (
+      error instanceof Error &&
+      (error.message.includes('Foreign key constraint') ||
+        error.message.includes('Record to delete does not exist'))
+    ) {
+      return response.status(400).json({
+        error: 'Cannot delete client',
+        message:
+          'This client cannot be deleted because it has related jobs or invoices.',
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     return response.status(500).json({
       error: 'Internal server error',
