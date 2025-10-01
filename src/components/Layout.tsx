@@ -12,6 +12,8 @@ import {
   Archive,
   LogOut,
   UserCheck,
+  User,
+  ChevronDown,
 } from 'lucide-react';
 
 const nav = [
@@ -29,6 +31,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { role, setRole } = useRole();
   const { user, logout } = useAuth();
   const loc = useLocation();
+  const [showUserMenu, setShowUserMenu] = React.useState(false);
+
+  // Close user menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showUserMenu && !target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showUserMenu]);
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -91,11 +107,58 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
               <div />
               <div className="flex items-center gap-4">
-                <div className="text-sm text-slate-600">
-                  Signed in as{' '}
-                  <span className="font-medium">
-                    {user?.email || 'admin@example.com'}
-                  </span>
+                <div className="relative user-menu-container">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  >
+                    <div className="flex items-center gap-2">
+                      {user?.profilePicture ? (
+                        <img
+                          src={user.profilePicture}
+                          alt="Profile"
+                          className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center">
+                          <User className="w-4 h-4 text-sky-600" />
+                        </div>
+                      )}
+                      <div className="text-left">
+                        <div className="text-sm font-medium text-slate-900">
+                          {user?.name || 'User'}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {user?.email || 'admin@example.com'}
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  </button>
+
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-slate-200 py-1 z-50">
+                      <Link
+                        to="/profile"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        <User className="w-4 h-4" />
+                        Profile Settings
+                      </Link>
+                      <hr className="my-1" />
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          handleLogout();
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
