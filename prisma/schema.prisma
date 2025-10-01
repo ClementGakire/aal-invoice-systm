@@ -10,17 +10,19 @@ datasource db {
 }
 
 model User {
-  id         String         @id @default(cuid())
-  name       String
-  email      String         @unique
-  role       Role           @default(CLIENT)
-  department String?
-  phone      String?
-  isActive   Boolean        @default(true)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  invoices   Invoice[]
-  jobs       LogisticsJob[]
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  password       String?        // For authentication
+  profilePicture String?        // URL to profile image
+  role           Role           @default(CLIENT)
+  department     String?
+  phone          String?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  invoices       Invoice[]
+  jobs           LogisticsJob[]
 
   @@map("users")
 }

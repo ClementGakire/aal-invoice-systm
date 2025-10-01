@@ -13,6 +13,7 @@ import ExpensesPage from './pages/ExpensesPage';
 import UsersPage from './pages/UsersPage';
 import LoginPage from './pages/LoginPage';
 import ClientPortal from './pages/ClientPortal';
+import UserProfilePage from './pages/UserProfilePage';
 
 function AppContent() {
   const { isAuthenticated, login, loading } = useAuth();
@@ -43,6 +44,7 @@ function AppContent() {
         <Route path="/invoices" element={<InvoicesPage />} />
         <Route path="/expenses" element={<ExpensesPage />} />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/portal/*" element={<ClientPortal />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -6,6 +6,8 @@ interface AuthState {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateProfile: (profileData: Partial<User> & { currentPassword?: string; newPassword?: string }) => Promise<boolean>;
+  updateProfilePicture: (imageData: string) => Promise<boolean>;
   loading: boolean;
 }
 
@@ -113,11 +115,130 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('aal_auth');
   };
 
+  const updateProfile = async (profileData: Partial<User> & { currentPassword?: string; newPassword?: string }): Promise<boolean> => {
+    if (!user) {
+      console.error('No user logged in');
+      return false;
+    }
+
+    try {
+      console.log('🔄 Updating profile for user:', user.id);
+
+      const response = await fetch(`${API_BASE_URL}/api/profile?userId=${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.user) {
+        console.log('✅ Profile updated successfully');
+        
+        // Convert date strings back to Date objects
+        const updatedUser: User = {
+          ...data.user,
+          createdAt: new Date(data.user.createdAt),
+          updatedAt: new Date(data.user.updatedAt),
+        };
+
+        setUser(updatedUser);
+
+        // Update localStorage
+        const savedAuth = localStorage.getItem('aal_auth');
+        if (savedAuth) {
+          const authData = JSON.parse(savedAuth);
+          localStorage.setItem(
+            'aal_auth',
+            JSON.stringify({
+              ...authData,
+              user: updatedUser,
+              timestamp: Date.now(),
+            })
+          );
+        }
+
+        return true;
+      } else {
+        console.log('❌ Profile update failed:', data.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('🚨 Profile update error:', error);
+      return false;
+    }
+  };
+
+  const updateProfilePicture = async (imageData: string): Promise<boolean> => {
+    if (!user) {
+      console.error('No user logged in');
+      return false;
+    }
+
+    try {
+      console.log('📸 Updating profile picture for user:', user.id);
+
+      const response = await fetch(`${API_BASE_URL}/api/profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ 
+          userId: user.id,
+          imageData 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.user) {
+        console.log('✅ Profile picture updated successfully');
+        
+        // Convert date strings back to Date objects
+        const updatedUser: User = {
+          ...data.user,
+          createdAt: new Date(data.user.createdAt),
+          updatedAt: new Date(data.user.updatedAt),
+        };
+
+        setUser(updatedUser);
+
+        // Update localStorage
+        const savedAuth = localStorage.getItem('aal_auth');
+        if (savedAuth) {
+          const authData = JSON.parse(savedAuth);
+          localStorage.setItem(
+            'aal_auth',
+            JSON.stringify({
+              ...authData,
+              user: updatedUser,
+              timestamp: Date.now(),
+            })
+          );
+        }
+
+        return true;
+      } else {
+        console.log('❌ Profile picture update failed:', data.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('🚨 Profile picture update error:', error);
+      return false;
+    }
+  };
+
   const value: AuthState = {
     isAuthenticated,
     user,
     login,
     logout,
+    updateProfile,
+    updateProfilePicture,
     loading,
   };
 
