@@ -24,12 +24,11 @@ export const LogisticsJobForm: React.FC<LogisticsJobFormProps> = ({
   clients,
 }) => {
   const [jobType, setJobType] = useState<JobType>(
-    initialData?.jobType || JobType.AIR_FREIGHT
+    initialData?.jobType || JobType.AIR_FREIGHT_IMPORT
   );
 
   const [formData, setFormData] = useState({
-    // Basic fields
-    jobNumber: initialData?.jobNumber || '',
+    // Basic fields - jobNumber will be auto-generated
     title: initialData?.title || '',
     clientId: initialData?.clientId || '',
     clientName: initialData?.clientName || '',
@@ -73,7 +72,6 @@ export const LogisticsJobForm: React.FC<LogisticsJobFormProps> = ({
 
     const baseJobData = {
       jobType,
-      jobNumber: formData.jobNumber,
       title: formData.title,
       clientId: formData.clientId,
       clientName: formData.clientName,
@@ -92,37 +90,30 @@ export const LogisticsJobForm: React.FC<LogisticsJobFormProps> = ({
 
     let jobData: Partial<LogisticsJob>;
 
-    switch (jobType) {
-      case JobType.AIR_FREIGHT:
-        jobData = {
-          ...baseJobData,
-          awb: {
-            masterAirWaybill: formData.masterAirWaybill,
-            houseAirWaybill: formData.houseAirWaybill || undefined,
-          },
-        } as Partial<AirFreightJob>;
-        break;
-
-      case JobType.SEA_FREIGHT:
-        jobData = {
-          ...baseJobData,
-          billOfLading: {
-            masterBL: formData.masterBL,
-            houseBL: formData.houseBL || undefined,
-          },
-        } as Partial<SeaFreightJob>;
-        break;
-
-      case JobType.ROAD_FREIGHT:
-        jobData = {
-          ...baseJobData,
-          plateNumber: formData.plateNumber,
-          containerNumber: formData.containerNumber,
-        } as Partial<RoadFreightJob>;
-        break;
-
-      default:
-        jobData = baseJobData;
+    if (jobType === JobType.AIR_FREIGHT_IMPORT || jobType === JobType.AIR_FREIGHT_EXPORT) {
+      jobData = {
+        ...baseJobData,
+        awb: {
+          masterAirWaybill: formData.masterAirWaybill,
+          houseAirWaybill: formData.houseAirWaybill || undefined,
+        },
+      } as Partial<AirFreightJob>;
+    } else if (jobType === JobType.SEA_FREIGHT_IMPORT || jobType === JobType.SEA_FREIGHT_EXPORT) {
+      jobData = {
+        ...baseJobData,
+        billOfLading: {
+          masterBL: formData.masterBL,
+          houseBL: formData.houseBL || undefined,
+        },
+      } as Partial<SeaFreightJob>;
+    } else if (jobType === JobType.ROAD_FREIGHT_IMPORT) {
+      jobData = {
+        ...baseJobData,
+        plateNumber: formData.plateNumber,
+        containerNumber: formData.containerNumber,
+      } as Partial<RoadFreightJob>;
+    } else {
+      jobData = baseJobData;
     }
 
     onSubmit(jobData);
@@ -164,26 +155,28 @@ export const LogisticsJobForm: React.FC<LogisticsJobFormProps> = ({
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-sky-500"
                   required
                 >
-                  <option value={JobType.AIR_FREIGHT}>Air Freight</option>
-                  <option value={JobType.SEA_FREIGHT}>Sea Freight</option>
-                  <option value={JobType.ROAD_FREIGHT}>Road Freight</option>
+                  <option value={JobType.AIR_FREIGHT_IMPORT}>Air Freight Import</option>
+                  <option value={JobType.AIR_FREIGHT_EXPORT}>Air Freight Export</option>
+                  <option value={JobType.SEA_FREIGHT_IMPORT}>Sea Freight Import</option>
+                  <option value={JobType.SEA_FREIGHT_EXPORT}>Sea Freight Export</option>
+                  <option value={JobType.ROAD_FREIGHT_IMPORT}>Road Freight Import</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Job Number *
+                  Job Number
                 </label>
-                <input
-                  type="text"
-                  value={formData.jobNumber}
-                  onChange={(e) =>
-                    setFormData({ ...formData, jobNumber: e.target.value })
-                  }
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-sky-500"
-                  placeholder="e.g., AF-2024-001"
-                  required
-                />
+                <div className="w-full p-2 border border-gray-200 rounded-md bg-gray-50 text-gray-600">
+                  Auto-generated on save
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Format: AAL-{jobType === JobType.AIR_FREIGHT_IMPORT ? 'AI' : 
+                              jobType === JobType.AIR_FREIGHT_EXPORT ? 'AE' :
+                              jobType === JobType.SEA_FREIGHT_IMPORT ? 'SI' :
+                              jobType === JobType.SEA_FREIGHT_EXPORT ? 'SE' :
+                              jobType === JobType.ROAD_FREIGHT_IMPORT ? 'RI' : 'XX'}-{new Date().getFullYear().toString().slice(-2)}-001
+                </p>
               </div>
 
               <div>
@@ -415,7 +408,7 @@ export const LogisticsJobForm: React.FC<LogisticsJobFormProps> = ({
           </div>
 
           {/* Job Type Specific Fields */}
-          {jobType === JobType.AIR_FREIGHT && (
+          {(jobType === JobType.AIR_FREIGHT_IMPORT || jobType === JobType.AIR_FREIGHT_EXPORT) && (
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h4 className="text-lg font-medium text-blue-900 mb-4">
                 Air Waybill Information
@@ -461,7 +454,7 @@ export const LogisticsJobForm: React.FC<LogisticsJobFormProps> = ({
             </div>
           )}
 
-          {jobType === JobType.SEA_FREIGHT && (
+          {(jobType === JobType.SEA_FREIGHT_IMPORT || jobType === JobType.SEA_FREIGHT_EXPORT) && (
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
               <h4 className="text-lg font-medium text-green-900 mb-4">
                 Bill of Lading Information
@@ -501,7 +494,7 @@ export const LogisticsJobForm: React.FC<LogisticsJobFormProps> = ({
             </div>
           )}
 
-          {jobType === JobType.ROAD_FREIGHT && (
+          {jobType === JobType.ROAD_FREIGHT_IMPORT && (
             <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
               <h4 className="text-lg font-medium text-orange-900 mb-4">
                 Road Freight Information
