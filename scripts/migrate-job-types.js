@@ -5,16 +5,16 @@ const prisma = new PrismaClient();
 async function migrateJobTypes() {
   try {
     console.log('Starting job type migration...');
-    
+
     // Get all jobs with old job types
     const jobs = await prisma.logisticsJob.findMany({
       where: {
         OR: [
           { jobType: 'AIR_FREIGHT' },
           { jobType: 'SEA_FREIGHT' },
-          { jobType: 'ROAD_FREIGHT' }
-        ]
-      }
+          { jobType: 'ROAD_FREIGHT' },
+        ],
+      },
     });
 
     console.log(`Found ${jobs.length} jobs to migrate`);
@@ -41,26 +41,26 @@ async function migrateJobTypes() {
 
       // Generate new job number in AAL format
       const abbreviations = {
-        'AIR_FREIGHT_IMPORT': 'AI',
-        'SEA_FREIGHT_IMPORT': 'SI', 
-        'ROAD_FREIGHT_IMPORT': 'RI'
+        AIR_FREIGHT_IMPORT: 'AI',
+        SEA_FREIGHT_IMPORT: 'SI',
+        ROAD_FREIGHT_IMPORT: 'RI',
       };
 
       const abbreviation = abbreviations[newJobType];
       const year = new Date().getFullYear().toString().slice(-2);
-      
+
       // Find next sequence number for this job type
       const existingJobsWithType = await prisma.logisticsJob.findMany({
         where: {
           jobType: newJobType,
           jobNumber: {
-            startsWith: `AAL-${abbreviation}-${year}-`
-          }
+            startsWith: `AAL-${abbreviation}-${year}-`,
+          },
         },
         orderBy: {
-          jobNumber: 'desc'
+          jobNumber: 'desc',
         },
-        take: 1
+        take: 1,
       });
 
       let sequenceNumber = 1;
@@ -75,18 +75,22 @@ async function migrateJobTypes() {
         }
       }
 
-      newJobNumber = `AAL-${abbreviation}-${year}-${sequenceNumber.toString().padStart(3, '0')}`;
+      newJobNumber = `AAL-${abbreviation}-${year}-${sequenceNumber
+        .toString()
+        .padStart(3, '0')}`;
 
       // Update the job
       await prisma.logisticsJob.update({
         where: { id: job.id },
         data: {
           jobType: newJobType,
-          jobNumber: newJobNumber
-        }
+          jobNumber: newJobNumber,
+        },
       });
 
-      console.log(`Migrated job ${job.jobNumber} -> ${newJobNumber} (${job.jobType} -> ${newJobType})`);
+      console.log(
+        `Migrated job ${job.jobNumber} -> ${newJobNumber} (${job.jobType} -> ${newJobType})`
+      );
     }
 
     console.log('Migration completed successfully!');

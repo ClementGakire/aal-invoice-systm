@@ -65,11 +65,17 @@ export type LogisticsJob = AirFreightJob | SeaFreightJob | RoadFreightJob;
 
 // Helper function to check job type
 export function isAirFreightJob(job: LogisticsJob): job is AirFreightJob {
-  return job.jobType === JobType.AIR_FREIGHT_IMPORT || job.jobType === JobType.AIR_FREIGHT_EXPORT;
+  return (
+    job.jobType === JobType.AIR_FREIGHT_IMPORT ||
+    job.jobType === JobType.AIR_FREIGHT_EXPORT
+  );
 }
 
 export function isSeaFreightJob(job: LogisticsJob): job is SeaFreightJob {
-  return job.jobType === JobType.SEA_FREIGHT_IMPORT || job.jobType === JobType.SEA_FREIGHT_EXPORT;
+  return (
+    job.jobType === JobType.SEA_FREIGHT_IMPORT ||
+    job.jobType === JobType.SEA_FREIGHT_EXPORT
+  );
 }
 
 export function isRoadFreightJob(job: LogisticsJob): job is RoadFreightJob {
@@ -309,7 +315,10 @@ export function generateInvoiceNumber(): string {
 }
 
 // Helper function to generate automatic job number based on job type
-export function generateJobNumber(jobType: JobType, sequenceNumber: number): string {
+export function generateJobNumber(
+  jobType: JobType,
+  sequenceNumber: number
+): string {
   const abbreviation = JOB_TYPE_ABBREVIATIONS[jobType];
   const year = new Date().getFullYear().toString().slice(-2);
   const sequence = sequenceNumber.toString().padStart(3, '0');

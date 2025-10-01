@@ -236,10 +236,12 @@ export default function JobsPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="flex items-center gap-2">
-                    {(j.jobType === 'AIR_FREIGHT_IMPORT' || j.jobType === 'AIR_FREIGHT_EXPORT') && (
+                    {(j.jobType === 'AIR_FREIGHT_IMPORT' ||
+                      j.jobType === 'AIR_FREIGHT_EXPORT') && (
                       <Plane className="w-4 h-4 text-blue-600" />
                     )}
-                    {(j.jobType === 'SEA_FREIGHT_IMPORT' || j.jobType === 'SEA_FREIGHT_EXPORT') && (
+                    {(j.jobType === 'SEA_FREIGHT_IMPORT' ||
+                      j.jobType === 'SEA_FREIGHT_EXPORT') && (
                       <Ship className="w-4 h-4 text-green-600" />
                     )}
                     {j.jobType === 'ROAD_FREIGHT_IMPORT' && (
@@ -251,9 +253,11 @@ export default function JobsPage() {
                   </div>
                   <span
                     className={`text-xs px-2 py-1 rounded ${
-                      (j.jobType === 'AIR_FREIGHT_IMPORT' || j.jobType === 'AIR_FREIGHT_EXPORT')
+                      j.jobType === 'AIR_FREIGHT_IMPORT' ||
+                      j.jobType === 'AIR_FREIGHT_EXPORT'
                         ? 'bg-blue-100 text-blue-700'
-                        : (j.jobType === 'SEA_FREIGHT_IMPORT' || j.jobType === 'SEA_FREIGHT_EXPORT')
+                        : j.jobType === 'SEA_FREIGHT_IMPORT' ||
+                          j.jobType === 'SEA_FREIGHT_EXPORT'
                         ? 'bg-green-100 text-green-700'
                         : 'bg-orange-100 text-orange-700'
                     }`}
@@ -346,10 +350,12 @@ export default function JobsPage() {
           <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-fadein">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                {(viewingJob.jobType === 'AIR_FREIGHT_IMPORT' || viewingJob.jobType === 'AIR_FREIGHT_EXPORT') && (
+                {(viewingJob.jobType === 'AIR_FREIGHT_IMPORT' ||
+                  viewingJob.jobType === 'AIR_FREIGHT_EXPORT') && (
                   <Plane className="w-6 h-6 text-blue-600" />
                 )}
-                {(viewingJob.jobType === 'SEA_FREIGHT_IMPORT' || viewingJob.jobType === 'SEA_FREIGHT_EXPORT') && (
+                {(viewingJob.jobType === 'SEA_FREIGHT_IMPORT' ||
+                  viewingJob.jobType === 'SEA_FREIGHT_EXPORT') && (
                   <Ship className="w-6 h-6 text-green-600" />
                 )}
                 {viewingJob.jobType === 'ROAD_FREIGHT_IMPORT' && (
@@ -401,9 +407,11 @@ export default function JobsPage() {
                       </span>
                       <div
                         className={`text-sm px-2 py-1 rounded inline-block ${
-                          (viewingJob.jobType === 'AIR_FREIGHT_IMPORT' || viewingJob.jobType === 'AIR_FREIGHT_EXPORT')
+                          viewingJob.jobType === 'AIR_FREIGHT_IMPORT' ||
+                          viewingJob.jobType === 'AIR_FREIGHT_EXPORT'
                             ? 'bg-blue-100 text-blue-700'
-                            : (viewingJob.jobType === 'SEA_FREIGHT_IMPORT' || viewingJob.jobType === 'SEA_FREIGHT_EXPORT')
+                            : viewingJob.jobType === 'SEA_FREIGHT_IMPORT' ||
+                              viewingJob.jobType === 'SEA_FREIGHT_EXPORT'
                             ? 'bg-green-100 text-green-700'
                             : 'bg-orange-100 text-orange-700'
                         }`}

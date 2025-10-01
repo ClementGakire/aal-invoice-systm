@@ -3,11 +3,11 @@ import prisma from '../lib/prisma-edge.js';
 
 // Job type abbreviation mapping for job numbers
 const JOB_TYPE_ABBREVIATIONS = {
-  'AIR_FREIGHT_IMPORT': 'AI',
-  'AIR_FREIGHT_EXPORT': 'AE',
-  'SEA_FREIGHT_IMPORT': 'SI',
-  'SEA_FREIGHT_EXPORT': 'SE',
-  'ROAD_FREIGHT_IMPORT': 'RI',
+  AIR_FREIGHT_IMPORT: 'AI',
+  AIR_FREIGHT_EXPORT: 'AE',
+  SEA_FREIGHT_IMPORT: 'SI',
+  SEA_FREIGHT_EXPORT: 'SE',
+  ROAD_FREIGHT_IMPORT: 'RI',
 };
 
 // Generate automatic job number based on job type and sequence
@@ -16,10 +16,10 @@ async function generateJobNumber(jobType) {
   if (!abbreviation) {
     throw new Error(`Invalid job type: ${jobType}`);
   }
-  
+
   const year = new Date().getFullYear().toString().slice(-2);
   const jobNumberPrefix = `AAL-${abbreviation}-${year}-`;
-  
+
   // Find the latest job number with this prefix to determine the next sequence
   const latestJob = await prisma.logisticsJob.findFirst({
     where: {
@@ -32,7 +32,7 @@ async function generateJobNumber(jobType) {
       jobNumber: 'desc',
     },
   });
-  
+
   let sequenceNumber = 1;
   if (latestJob && latestJob.jobNumber) {
     // Extract sequence number from existing job number
@@ -44,7 +44,7 @@ async function generateJobNumber(jobType) {
       }
     }
   }
-  
+
   const sequence = sequenceNumber.toString().padStart(3, '0');
   return `${jobNumberPrefix}${sequence}`;
 }
@@ -61,12 +61,18 @@ function transformJobData(job) {
   }
 
   // Transform based on job type
-  if (job.jobType === 'AIR_FREIGHT_IMPORT' || job.jobType === 'AIR_FREIGHT_EXPORT') {
+  if (
+    job.jobType === 'AIR_FREIGHT_IMPORT' ||
+    job.jobType === 'AIR_FREIGHT_EXPORT'
+  ) {
     transformed.awb = {
       masterAirWaybill: job.masterAirWaybill || '',
       houseAirWaybill: job.houseAirWaybill || '',
     };
-  } else if (job.jobType === 'SEA_FREIGHT_IMPORT' || job.jobType === 'SEA_FREIGHT_EXPORT') {
+  } else if (
+    job.jobType === 'SEA_FREIGHT_IMPORT' ||
+    job.jobType === 'SEA_FREIGHT_EXPORT'
+  ) {
     transformed.billOfLading = {
       masterBL: job.masterBL || '',
       houseBL: job.houseBL || '',

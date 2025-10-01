@@ -21,7 +21,7 @@ async function testJobNumberGeneration() {
         consignee: 'Test Consignee Ltd',
         package: '15 Boxes',
         goodDescription: 'Electronic Components',
-        masterAirWaybill: 'MAWB-176-12345678'
+        masterAirWaybill: 'MAWB-176-12345678',
       },
       {
         title: 'Test Air Export Job',
@@ -35,7 +35,7 @@ async function testJobNumberGeneration() {
         consignee: 'US Importer Inc',
         package: '8 Boxes',
         goodDescription: 'Coffee Products',
-        masterAirWaybill: 'MAWB-176-87654321'
+        masterAirWaybill: 'MAWB-176-87654321',
       },
       {
         title: 'Test Sea Import Job',
@@ -49,7 +49,7 @@ async function testJobNumberGeneration() {
         consignee: 'Rwanda Distributor',
         package: '1 x 40ft Container',
         goodDescription: 'Machinery Equipment',
-        masterBL: 'MBL-MAEU-9876543210'
+        masterBL: 'MBL-MAEU-9876543210',
       },
       {
         title: 'Test Road Import Job',
@@ -64,8 +64,8 @@ async function testJobNumberGeneration() {
         package: '1 Truck Load',
         goodDescription: 'Construction Materials',
         plateNumber: 'TRK-456-ABC',
-        containerNumber: 'CONT-789-XYZ'
-      }
+        containerNumber: 'CONT-789-XYZ',
+      },
     ];
 
     // First, let's ensure we have a test client
@@ -77,26 +77,26 @@ async function testJobNumberGeneration() {
         name: 'Test Client Company',
         email: 'test@client.com',
         phone: '+250788123456',
-        address: 'Kigali, Rwanda'
-      }
+        address: 'Kigali, Rwanda',
+      },
     });
 
     console.log('✅ Test client ready:', testClient.name);
 
     // Generate job numbers using our API logic
     const JOB_TYPE_ABBREVIATIONS = {
-      'AIR_FREIGHT_IMPORT': 'AI',
-      'AIR_FREIGHT_EXPORT': 'AE',
-      'SEA_FREIGHT_IMPORT': 'SI',
-      'SEA_FREIGHT_EXPORT': 'SE',
-      'ROAD_FREIGHT_IMPORT': 'RI',
+      AIR_FREIGHT_IMPORT: 'AI',
+      AIR_FREIGHT_EXPORT: 'AE',
+      SEA_FREIGHT_IMPORT: 'SI',
+      SEA_FREIGHT_EXPORT: 'SE',
+      ROAD_FREIGHT_IMPORT: 'RI',
     };
 
     async function generateJobNumber(jobType) {
       const abbreviation = JOB_TYPE_ABBREVIATIONS[jobType];
       const year = new Date().getFullYear().toString().slice(-2);
       const jobNumberPrefix = `AAL-${abbreviation}-${year}-`;
-      
+
       const latestJob = await prisma.logisticsJob.findFirst({
         where: {
           jobType: jobType,
@@ -108,7 +108,7 @@ async function testJobNumberGeneration() {
           jobNumber: 'desc',
         },
       });
-      
+
       let sequenceNumber = 1;
       if (latestJob && latestJob.jobNumber) {
         const parts = latestJob.jobNumber.split('-');
@@ -119,7 +119,7 @@ async function testJobNumberGeneration() {
           }
         }
       }
-      
+
       const sequence = sequenceNumber.toString().padStart(3, '0');
       return `${jobNumberPrefix}${sequence}`;
     }
@@ -128,15 +128,17 @@ async function testJobNumberGeneration() {
     for (const jobData of testJobs) {
       try {
         const jobNumber = await generateJobNumber(jobData.jobType);
-        
+
         const newJob = await prisma.logisticsJob.create({
           data: {
             ...jobData,
-            jobNumber
-          }
+            jobNumber,
+          },
         });
 
-        console.log(`✅ Created ${jobData.jobType}: ${newJob.jobNumber} - ${newJob.title}`);
+        console.log(
+          `✅ Created ${jobData.jobType}: ${newJob.jobNumber} - ${newJob.title}`
+        );
       } catch (error) {
         console.log(`❌ Failed to create ${jobData.jobType}: ${error.message}`);
       }
@@ -156,43 +158,48 @@ async function testJobNumberGeneration() {
       consignee: 'Rwanda Consignee Ltd',
       package: '5 Boxes',
       goodDescription: 'Electronics',
-      masterAirWaybill: 'MAWB-176-11111111'
+      masterAirWaybill: 'MAWB-176-11111111',
     };
 
-    const secondJobNumber = await generateJobNumber(additionalAirImport.jobType);
+    const secondJobNumber = await generateJobNumber(
+      additionalAirImport.jobType
+    );
     const secondJob = await prisma.logisticsJob.create({
       data: {
         ...additionalAirImport,
-        jobNumber: secondJobNumber
-      }
+        jobNumber: secondJobNumber,
+      },
     });
 
-    console.log(`✅ Created second AIR_FREIGHT_IMPORT: ${secondJob.jobNumber} - ${secondJob.title}`);
+    console.log(
+      `✅ Created second AIR_FREIGHT_IMPORT: ${secondJob.jobNumber} - ${secondJob.title}`
+    );
 
     // Show summary of all generated job numbers
     console.log('\n📋 Summary of generated job numbers:');
     const allJobs = await prisma.logisticsJob.findMany({
       where: {
         jobNumber: {
-          startsWith: 'AAL-'
-        }
+          startsWith: 'AAL-',
+        },
       },
       orderBy: {
-        jobNumber: 'asc'
+        jobNumber: 'asc',
       },
       select: {
         jobNumber: true,
         jobType: true,
-        title: true
-      }
+        title: true,
+      },
     });
 
-    allJobs.forEach(job => {
-      console.log(`  ${job.jobNumber} | ${job.jobType.padEnd(20)} | ${job.title}`);
+    allJobs.forEach((job) => {
+      console.log(
+        `  ${job.jobNumber} | ${job.jobType.padEnd(20)} | ${job.title}`
+      );
     });
 
     console.log('\n🎉 Job number generation test completed successfully!');
-
   } catch (error) {
     console.error('❌ Test failed:', error);
   } finally {
