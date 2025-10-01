@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useJobs, useClients } from '../hooks/useApi';
+import { useJobs, useClients, useJobExpenses } from '../hooks/useApi';
 import { isUsingFallback, api } from '../services/api';
 import FallbackBanner from '../components/FallbackBanner';
 import {
@@ -37,6 +37,7 @@ export default function JobsPage() {
   const [viewingJob, setViewingJob] = useState<any | null>(null);
   const [editingJob, setEditingJob] = useState<any | null>(null);
   const [loadingJobDetails, setLoadingJobDetails] = useState(false);
+  const [creatingExpenseForJob, setCreatingExpenseForJob] = useState<any | null>(null);
 
   const handleEditJob = async (job: any) => {
     try {
@@ -265,12 +266,15 @@ export default function JobsPage() {
                     {getJobTypeDisplayName(j.jobType)}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm text-gray-600">
                   <div>Client: {j.clientName}</div>
                   <div>
                     Route: {j.portOfLoading} → {j.portOfDischarge}
                   </div>
                   <div>Document: {getPrimaryDocument(j)}</div>
+                  <div className="font-medium text-green-700">
+                    Expenses: ${j.totalExpenses?.toFixed(2) || '0.00'} ({j.expenseCount || 0} items)
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -290,6 +294,13 @@ export default function JobsPage() {
                   className="px-3 py-1 border rounded text-sm hover:bg-gray-50 transition"
                 >
                   View
+                </button>
+                <button
+                  onClick={() => setCreatingExpenseForJob(j)}
+                  className="px-3 py-1 border rounded text-sm hover:bg-green-50 text-green-600 transition"
+                  title="Create expense for this job"
+                >
+                  + Expense
                 </button>
                 <button
                   onClick={() => handleEditJob(j)}
@@ -611,6 +622,38 @@ export default function JobsPage() {
                   </div>
                 )}
 
+                {/* Expenses Summary */}
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <h4 className="font-medium text-green-900 mb-3">Expenses</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Total Expenses:
+                      </span>
+                      <div className="text-sm font-bold text-green-700">
+                        ${viewingJob.totalExpenses?.toFixed(2) || '0.00'}
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Number of Expenses:
+                      </span>
+                      <div className="text-sm">
+                        {viewingJob.expenseCount || 0} items
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setViewingJob(null);
+                        setCreatingExpenseForJob(viewingJob);
+                      }}
+                      className="w-full mt-2 px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition"
+                    >
+                      Add Expense
+                    </button>
+                  </div>
+                </div>
+
                 {/* Timestamps */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-900 mb-3">Timestamps</h4>
@@ -716,6 +759,179 @@ export default function JobsPage() {
           </div>
         </div>
       )}
+
+      {/* Create Expense for Job Modal */}
+      {creatingExpenseForJob && (
+        <CreateExpenseForJobModal
+          job={creatingExpenseForJob}
+          onClose={() => setCreatingExpenseForJob(null)}
+          onSuccess={() => {
+            setCreatingExpenseForJob(null);
+            // Refresh jobs to update expense totals
+            window.location.reload(); // Simple refresh for now
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Create Expense for Job Modal Component
+function CreateExpenseForJobModal({
+  job,
+  onClose,
+  onSuccess,
+}: {
+  job: any;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { createJobExpense } = useJobExpenses(job.id);
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState('USD');
+  const [supplierName, setSupplierName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  const handleCreate = async () => {
+    if (!title || !amount) return;
+
+    setIsCreating(true);
+    setCreateError(null);
+
+    try {
+      await createJobExpense({
+        title,
+        amount: parseFloat(amount),
+        currency,
+        supplierName: supplierName || undefined,
+      });
+      onSuccess();
+    } catch (err) {
+      setCreateError(
+        err instanceof Error ? err.message : 'Failed to create expense'
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30">
+      <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md animate-fadein">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Create Expense</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+            disabled={isCreating}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="text-sm">
+            <div className="font-medium text-blue-900">Job: {job.jobNumber}</div>
+            <div className="text-blue-700">{job.title}</div>
+            <div className="text-blue-600">Client: {job.clientName}</div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Title *
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-200 focus:border-green-500"
+              placeholder="Expense description"
+              autoFocus
+              disabled={isCreating}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Amount *
+              </label>
+              <input
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                type="number"
+                step="0.01"
+                min="0"
+                className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-200 focus:border-green-500"
+                placeholder="0.00"
+                disabled={isCreating}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Currency
+              </label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-200 focus:border-green-500"
+                disabled={isCreating}
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="RWF">RWF</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Supplier Name
+            </label>
+            <input
+              value={supplierName}
+              onChange={(e) => setSupplierName(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-200 focus:border-green-500"
+              placeholder="Optional supplier name"
+              disabled={isCreating}
+            />
+          </div>
+        </div>
+
+        {createError && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded">
+            <strong>Error:</strong> {createError}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded border shadow hover:bg-gray-100 transition"
+            disabled={isCreating}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={!title || !amount || isCreating}
+            className="px-4 py-2 rounded bg-green-600 text-white shadow hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {isCreating ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin mr-2" />
+                Creating...
+              </>
+            ) : (
+              'Create Expense'
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -162,13 +162,7 @@ export default function InvoicesPage() {
         <h2 className="page-title">Invoices</h2>
         <div className="flex gap-2">
           <CreateInvoiceFromJobButton />
-          <button
-            onClick={() => setShowServiceInvoiceForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-          >
-            <Plus className="w-4 h-4" />
-            Invoice with Services
-          </button>
+          
           <NewInvoiceButton onInvoiceCreated={createInvoice} />
           <button
             onClick={() => {
@@ -752,14 +746,14 @@ function NewInvoiceButton({
         className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition"
       >
         <Plus className="w-4 h-4" />
-        New Invoice
+        Create a Quotation
       </button>
       {open && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30">
           <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md animate-fadein">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-5 h-5 text-sky-600" />
-              <h3 className="text-lg font-semibold">Create New Invoice</h3>
+              <h3 className="text-lg font-semibold">Create New Quotation</h3>
             </div>
 
             <div className="space-y-4">

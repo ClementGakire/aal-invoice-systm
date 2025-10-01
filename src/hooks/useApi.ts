@@ -548,3 +548,52 @@ export function useSupplier(id: string) {
 
   return { supplier, loading, error };
 }
+
+// Job expenses hook
+export function useJobExpenses(jobId: string) {
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchJobExpenses = useCallback(async () => {
+    if (!jobId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await api.jobs.expenses.getAll(jobId);
+      setExpenses(result.expenses || []);
+      setTotalExpenses(result.totalExpenses || 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch job expenses');
+      console.error('Job Expenses API Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [jobId]);
+
+  useEffect(() => {
+    fetchJobExpenses();
+  }, [fetchJobExpenses]);
+
+  const createJobExpense = async (expenseData: any) => {
+    try {
+      const result = await api.jobs.expenses.create(jobId, expenseData);
+      setExpenses((prev) => [result.expense, ...prev]);
+      setTotalExpenses(result.totalExpenses || 0);
+      return result.expense;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return {
+    expenses,
+    totalExpenses,
+    loading,
+    error,
+    refetch: fetchJobExpenses,
+    createJobExpense,
+  };
+}

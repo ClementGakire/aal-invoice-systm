@@ -127,8 +127,20 @@ export type Expense = {
   amount: number;
   currency: string;
   jobNumber?: string;
+  jobId?: string;
   supplierId?: string;
   supplierName?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  job?: {
+    id: string;
+    jobNumber: string;
+    title: string;
+  };
+  supplier?: {
+    id: string;
+    name: string;
+  };
 };
 
 const LS_PREFIX = 'aal_demo_v1:';
