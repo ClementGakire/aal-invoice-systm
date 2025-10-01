@@ -18,8 +18,8 @@ async function createTestJobs() {
           phone: '+250788123456',
           address: 'Kigali, Rwanda',
           contactPerson: 'John Doe',
-          tin: 'TIN123456789'
-        }
+          tin: 'TIN123456789',
+        },
       });
     }
 
@@ -43,10 +43,10 @@ async function createTestJobs() {
         package: '10 boxes',
         goodDescription: 'Consumer electronics and accessories',
         masterAirWaybill: 'EK-123456789',
-        houseAirWaybill: 'AAL-001-2024'
+        houseAirWaybill: 'AAL-001-2024',
       },
       {
-        jobNumber: 'SFI-2024-002', 
+        jobNumber: 'SFI-2024-002',
         title: 'Sea Freight Import - Machinery',
         clientId: testClient.id,
         jobType: 'SEA_FREIGHT_IMPORT',
@@ -61,7 +61,7 @@ async function createTestJobs() {
         goodDescription: 'Industrial machinery and spare parts',
         containerNumber: 'MSKU-1234567',
         masterBL: 'MSK-789654123',
-        houseBL: 'AAL-002-2024'
+        houseBL: 'AAL-002-2024',
       },
       {
         jobNumber: 'RFI-2024-003',
@@ -77,35 +77,38 @@ async function createTestJobs() {
         consignee: 'ABC Logistics Company',
         package: '50 packages',
         goodDescription: 'General merchandise and consumables',
-        plateNumber: 'RF-2024-789'
-      }
+        plateNumber: 'RF-2024-789',
+      },
     ];
 
     for (const job of testJobs) {
       const existingJob = await prisma.logisticsJob.findUnique({
-        where: { jobNumber: job.jobNumber }
+        where: { jobNumber: job.jobNumber },
       });
 
       if (!existingJob) {
         const createdJob = await prisma.logisticsJob.create({ data: job });
-        console.log(`✅ Created job: ${createdJob.jobNumber} - ${createdJob.title}`);
+        console.log(
+          `✅ Created job: ${createdJob.jobNumber} - ${createdJob.title}`
+        );
       } else {
         console.log(`⚠️ Job ${job.jobNumber} already exists`);
       }
     }
 
     console.log('🎉 Test jobs setup completed!');
-    
+
     // Display summary
     const allJobs = await prisma.logisticsJob.findMany({
-      include: { client: true }
-    });
-    
-    console.log('\n📋 Available Jobs:');
-    allJobs.forEach(job => {
-      console.log(`  ${job.jobNumber} - ${job.client.name} (${job.jobType}) - ${job.status}`);
+      include: { client: true },
     });
 
+    console.log('\n📋 Available Jobs:');
+    allJobs.forEach((job) => {
+      console.log(
+        `  ${job.jobNumber} - ${job.client.name} (${job.jobType}) - ${job.status}`
+      );
+    });
   } catch (error) {
     console.error('❌ Error creating test jobs:', error);
   } finally {

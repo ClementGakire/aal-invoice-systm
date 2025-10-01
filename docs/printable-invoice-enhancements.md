@@ -7,28 +7,32 @@ The PrintableInvoice component has been enhanced to properly display service-bas
 ## Key Enhancements
 
 ### 🧾 **Enhanced Charges Table**
+
 - **Improved Layout**: Restructured table headers to match the invoice format from your image
 - **Service Details**: Displays service name, rate, currency, and amounts clearly
 - **VAT Display**: Shows VAT percentage and calculated VAT amounts
 - **Multi-Currency Support**: Displays amounts with proper currency formatting
 
 ### 📊 **Table Structure (Matches Your Image)**
-| Column | Description |
-|--------|-------------|
-| **Charge Description** | Service name (e.g., "Customs Warehouse Rent", "Agency Fees") |
-| **Based On Qty & UOM** | Service basis (e.g., "Service") + quantity (1) |
-| **Rate & Curr Ex Rate** | Service rate + currency + exchange rate (1.00) |
-| **Amount** | Base service amount |
-| **Tax % Tax Amount** | VAT percentage + calculated VAT amount |
-| **Billing Amount** | Total amount (base + VAT) |
+
+| Column                  | Description                                                  |
+| ----------------------- | ------------------------------------------------------------ |
+| **Charge Description**  | Service name (e.g., "Customs Warehouse Rent", "Agency Fees") |
+| **Based On Qty & UOM**  | Service basis (e.g., "Service") + quantity (1)               |
+| **Rate & Curr Ex Rate** | Service rate + currency + exchange rate (1.00)               |
+| **Amount**              | Base service amount                                          |
+| **Tax % Tax Amount**    | VAT percentage + calculated VAT amount                       |
+| **Billing Amount**      | Total amount (base + VAT)                                    |
 
 ### 💰 **Enhanced Totals Section**
+
 - **Subtotal**: Sum of all service base amounts
 - **VAT-18**: Shows "VAT @ 18.00 %" with calculated VAT total
 - **Total**: Final amount with currency code
 - **Multi-Currency**: Proper formatting for USD and RWF
 
 ### 📝 **Improved Amount in Words**
+
 - **Currency-Aware**: Shows proper currency names (Francs/Dollars, Centimes/Cents)
 - **Auto-Generated**: Uses the enhanced number-to-words from service creation
 - **Professional Format**: Matches standard invoice formatting
@@ -38,6 +42,7 @@ The PrintableInvoice component has been enhanced to properly display service-bas
 ### Sample Service Invoice Display:
 
 **Charges Table:**
+
 ```
 ┌─────────────────────────┬──────────────┬──────────────┬──────────┬─────────────┬──────────────┐
 │ Charge Description      │ Based On     │ Rate & Curr  │ Amount   │ Tax %       │ Billing      │
@@ -55,6 +60,7 @@ The PrintableInvoice component has been enhanced to properly display service-bas
 ```
 
 **Totals Section:**
+
 ```
 ┌──────────────┬──────────────┐
 │ Sub Total    │    203,100   │
@@ -67,6 +73,7 @@ The PrintableInvoice component has been enhanced to properly display service-bas
 ```
 
 **Amount in Words:**
+
 ```
 Amount in Word
 (RWF) Two Hundred Twenty-One Thousand One Hundred Francs And Zero Centimes
@@ -75,17 +82,20 @@ Amount in Word
 ## Technical Implementation
 
 ### 🔧 **Smart Data Processing**
+
 - **Line Item Mapping**: Converts service data to proper invoice line items
 - **VAT Calculation**: Automatically calculates and displays VAT amounts
 - **Currency Formatting**: Uses `toLocaleString()` for proper number formatting
 - **Fallback Values**: Handles missing data gracefully
 
 ### 📱 **Responsive Design**
+
 - **Print Optimization**: Maintains print-friendly formatting
 - **Mobile Friendly**: Responsive table layout
 - **Professional Styling**: Clean borders and proper spacing
 
 ### 🎯 **Data Integration**
+
 - **Service Names**: Displays actual service descriptions
 - **Proper VAT Display**: Shows VAT percentage and amounts correctly
 - **Multi-Currency**: Handles both USD and RWF formatting
