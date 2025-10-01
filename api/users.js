@@ -114,7 +114,7 @@ export default async function handler(request, response) {
           data: {
             name,
             email,
-            role: userRole || 'CLIENT',
+            role: userRole ? userRole.toUpperCase() : 'CLIENT',
             department: department || null,
             phone: phone || null,
             isActive: userIsActive !== undefined ? userIsActive : true,
@@ -159,6 +159,11 @@ export default async function handler(request, response) {
           updatedAt: ___,
           ...fieldsToUpdate
         } = updateData;
+
+        // Convert role to uppercase to match Prisma enum values
+        if (fieldsToUpdate.role) {
+          fieldsToUpdate.role = fieldsToUpdate.role.toUpperCase();
+        }
 
         const updatedUser = await prisma.user.update({
           where: { id: updateId },
