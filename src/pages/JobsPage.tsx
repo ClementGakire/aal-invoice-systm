@@ -219,9 +219,11 @@ export default function JobsPage() {
               className="px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
             >
               <option value="all">All Types</option>
-              <option value="AIR_FREIGHT">Air Freight</option>
-              <option value="SEA_FREIGHT">Sea Freight</option>
-              <option value="ROAD_FREIGHT">Road Freight</option>
+              <option value="AIR_FREIGHT_IMPORT">Air Freight Import</option>
+              <option value="AIR_FREIGHT_EXPORT">Air Freight Export</option>
+              <option value="SEA_FREIGHT_IMPORT">Sea Freight Import</option>
+              <option value="SEA_FREIGHT_EXPORT">Sea Freight Export</option>
+              <option value="ROAD_FREIGHT_IMPORT">Road Freight Import</option>
             </select>
           </div>
         </div>
@@ -234,13 +236,15 @@ export default function JobsPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="flex items-center gap-2">
-                    {j.jobType === 'AIR_FREIGHT' && (
+                    {(j.jobType === 'AIR_FREIGHT_IMPORT' ||
+                      j.jobType === 'AIR_FREIGHT_EXPORT') && (
                       <Plane className="w-4 h-4 text-blue-600" />
                     )}
-                    {j.jobType === 'SEA_FREIGHT' && (
+                    {(j.jobType === 'SEA_FREIGHT_IMPORT' ||
+                      j.jobType === 'SEA_FREIGHT_EXPORT') && (
                       <Ship className="w-4 h-4 text-green-600" />
                     )}
-                    {j.jobType === 'ROAD_FREIGHT' && (
+                    {j.jobType === 'ROAD_FREIGHT_IMPORT' && (
                       <Truck className="w-4 h-4 text-orange-600" />
                     )}
                     <span className="font-medium">
@@ -249,9 +253,11 @@ export default function JobsPage() {
                   </div>
                   <span
                     className={`text-xs px-2 py-1 rounded ${
-                      j.jobType === 'AIR_FREIGHT'
+                      j.jobType === 'AIR_FREIGHT_IMPORT' ||
+                      j.jobType === 'AIR_FREIGHT_EXPORT'
                         ? 'bg-blue-100 text-blue-700'
-                        : j.jobType === 'SEA_FREIGHT'
+                        : j.jobType === 'SEA_FREIGHT_IMPORT' ||
+                          j.jobType === 'SEA_FREIGHT_EXPORT'
                         ? 'bg-green-100 text-green-700'
                         : 'bg-orange-100 text-orange-700'
                     }`}
@@ -344,13 +350,15 @@ export default function JobsPage() {
           <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-fadein">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                {viewingJob.jobType === 'AIR_FREIGHT' && (
+                {(viewingJob.jobType === 'AIR_FREIGHT_IMPORT' ||
+                  viewingJob.jobType === 'AIR_FREIGHT_EXPORT') && (
                   <Plane className="w-6 h-6 text-blue-600" />
                 )}
-                {viewingJob.jobType === 'SEA_FREIGHT' && (
+                {(viewingJob.jobType === 'SEA_FREIGHT_IMPORT' ||
+                  viewingJob.jobType === 'SEA_FREIGHT_EXPORT') && (
                   <Ship className="w-6 h-6 text-green-600" />
                 )}
-                {viewingJob.jobType === 'ROAD_FREIGHT' && (
+                {viewingJob.jobType === 'ROAD_FREIGHT_IMPORT' && (
                   <Truck className="w-6 h-6 text-orange-600" />
                 )}
                 <h3 className="text-xl font-semibold">Job Details</h3>
@@ -399,9 +407,11 @@ export default function JobsPage() {
                       </span>
                       <div
                         className={`text-sm px-2 py-1 rounded inline-block ${
-                          viewingJob.jobType === 'AIR_FREIGHT'
+                          viewingJob.jobType === 'AIR_FREIGHT_IMPORT' ||
+                          viewingJob.jobType === 'AIR_FREIGHT_EXPORT'
                             ? 'bg-blue-100 text-blue-700'
-                            : viewingJob.jobType === 'SEA_FREIGHT'
+                            : viewingJob.jobType === 'SEA_FREIGHT_IMPORT' ||
+                              viewingJob.jobType === 'SEA_FREIGHT_EXPORT'
                             ? 'bg-green-100 text-green-700'
                             : 'bg-orange-100 text-orange-700'
                         }`}

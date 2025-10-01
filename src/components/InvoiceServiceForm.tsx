@@ -1,14 +1,6 @@
-import { useState } from 'react';
-import { Plus, Package, FileText, X, Trash2, Calculator } from 'lucide-react';
-import { useJobs, useInvoices, useServices } from '../hooks/useApi';
-import {
-  generateInvoiceLineItems,
-  getJobTypeDisplayName,
-  isAirFreightJob,
-  isSeaFreightJob,
-  isRoadFreightJob,
-} from '../types/logistics';
-import type { LogisticsJob } from '../types/logistics';
+import React, { useState, useEffect } from 'react';
+import { useServices, useClients } from '../hooks/useApi';
+import { Plus, X, Trash2, Calculator } from 'lucide-react';
 
 // ServiceItem interface for type safety
 interface ServiceItem {
@@ -31,38 +23,28 @@ interface ServiceLineItem {
   totalAmount: number;
 }
 
-interface CreateInvoiceFromJobButtonProps {
-  onInvoiceCreated?: (invoice: any) => void;
+interface InvoiceServiceFormProps {
+  onInvoiceCreate: (invoiceData: any) => Promise<void>;
+  onCancel: () => void;
 }
 
-export default function CreateInvoiceFromJobButton({
-  onInvoiceCreated,
-}: CreateInvoiceFromJobButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState('');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [serviceLineItems, setServiceLineItems] = useState<ServiceLineItem[]>(
-    []
+export default function InvoiceServiceForm({
+  onInvoiceCreate,
+  onCancel,
+}: InvoiceServiceFormProps) {
+  const { services, loading: servicesLoading } = useServices();
+  const { clients } = useClients();
+
+  const [clientId, setClientId] = useState('');
+  const [invoiceDate, setInvoiceDate] = useState(
+    new Date().toISOString().split('T')[0]
   );
   const [dueDate, setDueDate] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [serviceLineItems, setServiceLineItems] = useState<ServiceLineItem[]>(
+    []
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Use the API hooks
-  const { jobs: availableJobs, loading: jobsLoading } = useJobs();
-  const { createInvoice } = useInvoices();
-  const { services, loading: servicesLoading } = useServices();
-
-  const getBookingNumber = (job: LogisticsJob): string | undefined => {
-    if (isSeaFreightJob(job)) {
-      return job.billOfLading.masterBL;
-    } else if (isAirFreightJob(job)) {
-      return job.awb.masterAirWaybill;
-    } else if (isRoadFreightJob(job)) {
-      return job.plateNumber;
-    }
-    return undefined;
-  };
 
   // Add a new service line item
   const addServiceLineItem = () => {
@@ -244,36 +226,27 @@ export default function CreateInvoiceFromJobButton({
     return result;
   };
 
-  const handleCreateInvoice = async () => {
-    if (!selectedJobId || !invoiceNumber || serviceLineItems.length === 0) {
-      alert(
-        'Please select a job, enter an invoice number, and add at least one service'
-      );
+  // Submit the invoice
+  const handleSubmit = async () => {
+    if (!clientId || serviceLineItems.length === 0) {
+      alert('Please select a client and add at least one service');
       return;
     }
 
-    const selectedJob = availableJobs.find(
-      (job: LogisticsJob) => job.id === selectedJobId
-    ) as LogisticsJob;
-    if (!selectedJob) return;
+    const totals = calculateTotals();
+    const mainCurrency = serviceLineItems[0]?.currency || 'USD';
+    const mainTotal =
+      mainCurrency === 'USD' ? totals.usd.total : totals.rwf.total;
 
     setIsSubmitting(true);
 
     try {
-      const totals = calculateTotals();
-      const mainCurrency = serviceLineItems[0]?.currency || 'USD';
-      const mainTotal =
-        mainCurrency === 'USD' ? totals.usd.total : totals.rwf.total;
-
       const invoiceData = {
-        clientId: selectedJob.clientId,
-        jobId: selectedJob.id,
-        jobNumber: selectedJob.jobNumber,
-        bookingNumber: getBookingNumber(selectedJob),
-        status: 'PENDING',
-        currency: mainCurrency,
-        invoiceDate: new Date().toISOString(),
+        clientId,
+        status: 'DRAFT',
+        invoiceDate,
         dueDate: dueDate || null,
+        currency: mainCurrency,
         subTotal:
           mainCurrency === 'USD' ? totals.usd.subTotal : totals.rwf.subTotal,
         total: mainTotal,
@@ -291,18 +264,7 @@ export default function CreateInvoiceFromJobButton({
         })),
       };
 
-      const newInvoice = await createInvoice(invoiceData);
-
-      // Call the optional callback
-      onInvoiceCreated?.(newInvoice);
-
-      // Reset form
-      setIsOpen(false);
-      setSelectedJobId('');
-      setInvoiceNumber('');
-      setServiceLineItems([]);
-      setDueDate('');
-      setRemarks('');
+      await onInvoiceCreate(invoiceData);
     } catch (error) {
       console.error('Failed to create invoice:', error);
       alert('Failed to create invoice. Please try again.');
@@ -311,195 +273,199 @@ export default function CreateInvoiceFromJobButton({
     }
   };
 
+  const totals = calculateTotals();
+
   return (
-    <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-      >
-        <Package className="w-4 h-4" />
-        Create from Job
-      </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Create Invoice with Services
+            </h2>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-6 h-6 text-blue-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Create Invoice from Job
-                  </h2>
-                </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+          {/* Invoice Details */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Client *
+              </label>
+              <select
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select a client...</option>
+                {clients?.map((client: any) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              {/* Job and Invoice Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Job *
-                  </label>
-                  <select
-                    value={selectedJobId}
-                    onChange={(e) => setSelectedJobId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    disabled={jobsLoading}
-                  >
-                    <option value="">
-                      {jobsLoading ? 'Loading jobs...' : 'Choose a job...'}
-                    </option>
-                    {availableJobs.map((job: LogisticsJob) => (
-                      <option key={job.id} value={job.id}>
-                        {job.jobNumber} - {job.clientName} (
-                        {getJobTypeDisplayName(job.jobType)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Invoice Date *
+              </label>
+              <input
+                type="date"
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Invoice Number *
-                  </label>
-                  <input
-                    type="text"
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    placeholder="INV-001"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Due Date
-                  </label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Job Type
-                  </label>
-                  <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                    {selectedJobId
-                      ? getJobTypeDisplayName(
-                          availableJobs.find(
-                            (j: LogisticsJob) => j.id === selectedJobId
-                          )?.jobType || 'AIR_FREIGHT_IMPORT'
-                        )
-                      : 'Select a job first'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Services Section */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Services
-                  </h3>
-                  <button
-                    onClick={addServiceLineItem}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Service
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {serviceLineItems.map((item) => (
-                    <ServiceLineItemForm
-                      key={item.id}
-                      item={item}
-                      services={services || []}
-                      servicesLoading={servicesLoading}
-                      onUpdate={(updates) =>
-                        updateServiceLineItem(item.id, updates)
-                      }
-                      onRemove={() => removeServiceLineItem(item.id)}
-                      onServiceSelect={(serviceId) =>
-                        handleServiceSelection(item.id, serviceId)
-                      }
-                    />
-                  ))}
-
-                  {serviceLineItems.length === 0 && (
-                    <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                      No services added yet. Click "Add Service" to get started.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Totals Summary */}
-              {serviceLineItems.length > 0 && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Calculator className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Totals Summary
-                    </h3>
-                  </div>
-
-                  <TotalsSummary totals={calculateTotals()} />
-                </div>
-              )}
-
-              {/* Remarks */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Remarks
-                </label>
-                <textarea
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Additional notes or remarks..."
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateInvoice}
-                  disabled={
-                    !selectedJobId ||
-                    !invoiceNumber ||
-                    serviceLineItems.length === 0 ||
-                    isSubmitting
-                  }
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  {isSubmitting ? 'Creating Invoice...' : 'Create Invoice'}
-                </button>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Due Date
+              </label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
+
+          {/* Service Line Items */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Services</h3>
+              <button
+                onClick={addServiceLineItem}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+              >
+                <Plus className="w-4 h-4" />
+                Add Service
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {serviceLineItems.map((item) => (
+                <ServiceLineItemForm
+                  key={item.id}
+                  item={item}
+                  services={services || []}
+                  servicesLoading={servicesLoading}
+                  onUpdate={(updates) =>
+                    updateServiceLineItem(item.id, updates)
+                  }
+                  onRemove={() => removeServiceLineItem(item.id)}
+                  onServiceSelect={(serviceId) =>
+                    handleServiceSelection(item.id, serviceId)
+                  }
+                />
+              ))}
+
+              {serviceLineItems.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No services added yet. Click "Add Service" to get started.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Totals Summary */}
+          {serviceLineItems.length > 0 && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <Calculator className="w-5 h-5 text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Totals Summary
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {totals.usd.total > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-gray-700">USD Totals</h4>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span>USD {totals.usd.subTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>VAT:</span>
+                        <span>USD {totals.usd.vatTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total:</span>
+                        <span>USD {totals.usd.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {totals.rwf.total > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-gray-700">RWF Totals</h4>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span>RWF {totals.rwf.subTotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>VAT:</span>
+                        <span>RWF {totals.rwf.vatTotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total:</span>
+                        <span>RWF {totals.rwf.total.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Remarks */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Remarks
+            </label>
+            <textarea
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Additional notes or remarks..."
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onCancel}
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={
+                !clientId || serviceLineItems.length === 0 || isSubmitting
+              }
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {isSubmitting ? 'Creating Invoice...' : 'Create Invoice'}
+            </button>
+          </div>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -655,53 +621,6 @@ function ServiceLineItemForm({
           <span className="font-bold">
             {item.currency} {item.amount.toFixed(2)}
           </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Totals Summary Component
-function TotalsSummary({ totals }: { totals: any }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {totals.usd.total > 0 && (
-        <div className="space-y-2">
-          <h4 className="font-medium text-gray-700">USD Totals</h4>
-          <div className="text-sm space-y-1">
-            <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span>USD {totals.usd.subTotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>VAT:</span>
-              <span>USD {totals.usd.vatTotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total:</span>
-              <span>USD {totals.usd.total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {totals.rwf.total > 0 && (
-        <div className="space-y-2">
-          <h4 className="font-medium text-gray-700">RWF Totals</h4>
-          <div className="text-sm space-y-1">
-            <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span>RWF {totals.rwf.subTotal.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>VAT:</span>
-              <span>RWF {totals.rwf.vatTotal.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total:</span>
-              <span>RWF {totals.rwf.total.toLocaleString()}</span>
-            </div>
-          </div>
         </div>
       )}
     </div>

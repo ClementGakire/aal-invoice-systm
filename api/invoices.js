@@ -71,6 +71,9 @@ export default async function handler(request, response) {
             user: {
               select: { id: true, name: true, email: true },
             },
+            lineItems: {
+              orderBy: { id: 'asc' },
+            },
             _count: {
               select: { lineItems: true },
             },

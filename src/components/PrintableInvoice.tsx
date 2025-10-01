@@ -86,7 +86,7 @@ function numberToWords(num: number): string {
 
 // Company configuration
 const companyConfig = {
-  name: 'Aviation Africa Ltd',
+  name: 'Aviation Africa Logistics',
   regNumber: 'R.C: Bba RJ7J',
   address: {
     line1: 'EAR Building, 2nd Floor, No 1 Giporoso',
@@ -98,7 +98,7 @@ const companyConfig = {
   watermark: '/watermark.jpeg',
   bankDetails: {
     bank: 'Bank of Kigali',
-    accountName: 'Aviation Africa Ltd',
+    accountName: 'Aviation Africa Logistics',
     accountNumber: '9030020478362',
     swiftCode: 'BKIGRWRW',
     branch: 'Head Office',
@@ -657,17 +657,15 @@ export default function PrintableInvoice({
                       style={{ width: '12%' }}
                     >
                       Based On
+                      <br />
+                      Qty & UOM
                     </th>
                     <th
                       className="border border-black p-1 text-center font-semibold"
                       style={{ width: '12%' }}
                     >
                       Rate & Curr
-                    </th>
-                    <th
-                      className="border border-black p-1 text-center font-semibold"
-                      style={{ width: '8%' }}
-                    >
+                      <br />
                       Ex Rate
                     </th>
                     <th
@@ -680,51 +678,82 @@ export default function PrintableInvoice({
                       className="border border-black p-1 text-center font-semibold"
                       style={{ width: '8%' }}
                     >
-                      Tax %
-                    </th>
-                    <th
-                      className="border border-black p-1 text-right font-semibold"
-                      style={{ width: '10%' }}
-                    >
+                      Tax %<br />
                       Tax Amount
                     </th>
                     <th
                       className="border border-black p-1 text-right font-semibold"
                       style={{ width: '15%' }}
                     >
-                      Billing Amount (USD)
+                      Billing Amount
+                      <br />({invoice.currency || 'USD'})
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {invoice.lineItems?.map((item: any, index: number) => (
-                    <tr key={index}>
-                      <td className="border border-black p-1">
-                        {item.description}
-                      </td>
-                      <td className="border border-black p-1 text-center">
-                        {item.basedOn || 'Flat'}
-                      </td>
-                      <td className="border border-black p-1 text-center">
-                        {item.rate?.toFixed(2)} {item.currency || 'USD'}
-                      </td>
-                      <td className="border border-black p-1 text-center">
-                        1.00
-                      </td>
-                      <td className="border border-black p-1 text-right">
-                        {item.amount?.toFixed(2)}
-                      </td>
-                      <td className="border border-black p-1 text-center">
-                        {item.taxPercent || ''}
-                      </td>
-                      <td className="border border-black p-1 text-right">
-                        {item.taxAmount ? item.taxAmount.toFixed(2) : ''}
-                      </td>
-                      <td className="border border-black p-1 text-right">
-                        {(item.amount || 0).toFixed(2)}
+                  {invoice.lineItems && invoice.lineItems.length > 0 ? (
+                    invoice.lineItems.map((item: any, index: number) => (
+                      <tr key={index}>
+                        {/* Charge Description */}
+                        <td className="border border-black p-1">
+                          <div className="font-medium">{item.description}</div>
+                        </td>
+
+                        {/* Based On + Quantity */}
+                        <td className="border border-black p-1 text-center">
+                          <div>{item.basedOn || 'Service'}</div>
+                          <div className="text-xs mt-1">1</div>
+                        </td>
+
+                        {/* Rate & Currency + Exchange Rate */}
+                        <td className="border border-black p-1 text-center">
+                          <div>
+                            {item.rate?.toLocaleString() ||
+                              item.amount?.toLocaleString()}{' '}
+                            {item.currency || invoice.currency || 'USD'}
+                          </div>
+                          <div className="text-xs mt-1">1.00</div>
+                        </td>
+
+                        {/* Amount */}
+                        <td className="border border-black p-1 text-right">
+                          <div>{item.amount?.toLocaleString() || '0.00'}</div>
+                        </td>
+
+                        {/* Tax % + Tax Amount */}
+                        <td className="border border-black p-1 text-center">
+                          <div>
+                            {item.taxPercent
+                              ? `VAT @ ${item.taxPercent.toFixed(2)} %`
+                              : ''}
+                          </div>
+                          <div className="text-xs mt-1">
+                            {item.taxAmount
+                              ? item.taxAmount.toLocaleString()
+                              : ''}
+                          </div>
+                        </td>
+
+                        {/* Billing Amount */}
+                        <td className="border border-black p-1 text-right">
+                          <div className="font-medium">
+                            {item.billingAmount?.toLocaleString() ||
+                              item.amount?.toLocaleString() ||
+                              '0.00'}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="border border-black p-4 text-center text-gray-500"
+                      >
+                        No line items found for this invoice
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -732,8 +761,17 @@ export default function PrintableInvoice({
             {/* Amount in Words */}
             <div className="mb-3 print:mb-2">
               <div className="border border-black p-1 bg-gray-50">
-                <span className="font-semibold">Amount in Words: </span>
-                USD {numberToWords(invoice.total || 0)} only
+                <span className="font-semibold">Amount in Word</span>
+                <br />
+                <span className="font-semibold">
+                  ({invoice.currency || 'USD'}){' '}
+                </span>
+                {invoice.amountInWords ||
+                  `${numberToWords(invoice.total || 0)} ${
+                    invoice.currency === 'RWF' ? 'Francs' : 'Dollars'
+                  } And Zero ${
+                    invoice.currency === 'RWF' ? 'Centimes' : 'Cents'
+                  }`}
               </div>
             </div>
 
@@ -744,26 +782,41 @@ export default function PrintableInvoice({
                   <tbody>
                     <tr>
                       <td className="border border-black p-1 font-semibold">
-                        Sub Total (USD)
+                        Sub Total
                       </td>
                       <td className="border border-black p-1 text-right">
-                        {invoice.subTotal?.toFixed(2)}
+                        {invoice.subTotal?.toLocaleString() || '0.00'}
                       </td>
                     </tr>
                     <tr>
                       <td className="border border-black p-1 font-semibold">
-                        Total Tax
+                        VAT-18
                       </td>
                       <td className="border border-black p-1 text-right">
-                        0.00
+                        VAT @ 18.00 %
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="border border-black p-1"></td>
+                      <td className="border border-black p-1 text-right">
+                        {(() => {
+                          const totalTax =
+                            invoice.lineItems?.reduce(
+                              (sum: number, item: any) =>
+                                sum + (item.taxAmount || 0),
+                              0
+                            ) || 0;
+                          return totalTax.toLocaleString();
+                        })()}
                       </td>
                     </tr>
                     <tr className="bg-gray-100">
                       <td className="border border-black p-1 font-bold">
-                        Total (USD)
+                        Total &nbsp;&nbsp;&nbsp;&nbsp;
+                        {invoice.currency || 'USD'}
                       </td>
                       <td className="border border-black p-1 text-right font-bold">
-                        {invoice.total?.toFixed(2)}
+                        {invoice.total?.toLocaleString() || '0.00'}
                       </td>
                     </tr>
                   </tbody>

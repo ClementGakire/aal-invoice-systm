@@ -24,6 +24,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import PrintableInvoice from '../components/PrintableInvoice';
+import InvoiceServiceForm from '../components/InvoiceServiceForm';
 
 function downloadCSV(content: string, filename = 'invoices.csv') {
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
@@ -55,6 +56,7 @@ export default function InvoicesPage() {
   const [editingInvoice, setEditingInvoice] = useState<any | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<any | null>(null);
   const [printingInvoice, setPrintingInvoice] = useState<any | null>(null);
+  const [showServiceInvoiceForm, setShowServiceInvoiceForm] = useState(false);
 
   const filteredInvoices = useMemo(() => {
     let filtered = invoices || [];
@@ -160,6 +162,13 @@ export default function InvoicesPage() {
         <h2 className="page-title">Invoices</h2>
         <div className="flex gap-2">
           <CreateInvoiceFromJobButton />
+          <button
+            onClick={() => setShowServiceInvoiceForm(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          >
+            <Plus className="w-4 h-4" />
+            Invoice with Services
+          </button>
           <NewInvoiceButton onInvoiceCreated={createInvoice} />
           <button
             onClick={() => {
@@ -540,6 +549,17 @@ export default function InvoicesPage() {
         <PrintableInvoice
           invoice={printingInvoice}
           onClose={() => setPrintingInvoice(null)}
+        />
+      )}
+
+      {/* Service Invoice Form */}
+      {showServiceInvoiceForm && (
+        <InvoiceServiceForm
+          onInvoiceCreate={async (invoiceData) => {
+            await createInvoice(invoiceData);
+            setShowServiceInvoiceForm(false);
+          }}
+          onCancel={() => setShowServiceInvoiceForm(false)}
         />
       )}
     </div>

@@ -1,6 +1,54 @@
 // Import edge-compatible Prisma client
 import prisma from '../lib/prisma-edge.js';
 
+// Job type abbreviation mapping for job numbers
+const JOB_TYPE_ABBREVIATIONS = {
+  AIR_FREIGHT_IMPORT: 'AI',
+  AIR_FREIGHT_EXPORT: 'AE',
+  SEA_FREIGHT_IMPORT: 'SI',
+  SEA_FREIGHT_EXPORT: 'SE',
+  ROAD_FREIGHT_IMPORT: 'RI',
+};
+
+// Generate automatic job number based on job type and sequence
+async function generateJobNumber(jobType) {
+  const abbreviation = JOB_TYPE_ABBREVIATIONS[jobType];
+  if (!abbreviation) {
+    throw new Error(`Invalid job type: ${jobType}`);
+  }
+
+  const year = new Date().getFullYear().toString().slice(-2);
+  const jobNumberPrefix = `AAL-${abbreviation}-${year}-`;
+
+  // Find the latest job number with this prefix to determine the next sequence
+  const latestJob = await prisma.logisticsJob.findFirst({
+    where: {
+      jobType: jobType,
+      jobNumber: {
+        startsWith: jobNumberPrefix,
+      },
+    },
+    orderBy: {
+      jobNumber: 'desc',
+    },
+  });
+
+  let sequenceNumber = 1;
+  if (latestJob && latestJob.jobNumber) {
+    // Extract sequence number from existing job number
+    const parts = latestJob.jobNumber.split('-');
+    if (parts.length === 4) {
+      const lastSequence = parseInt(parts[3], 10);
+      if (!isNaN(lastSequence)) {
+        sequenceNumber = lastSequence + 1;
+      }
+    }
+  }
+
+  const sequence = sequenceNumber.toString().padStart(3, '0');
+  return `${jobNumberPrefix}${sequence}`;
+}
+
 // Transform job data to match frontend expectations
 function transformJobData(job) {
   if (!job) return job;
@@ -13,12 +61,18 @@ function transformJobData(job) {
   }
 
   // Transform based on job type
-  if (job.jobType === 'AIR_FREIGHT') {
+  if (
+    job.jobType === 'AIR_FREIGHT_IMPORT' ||
+    job.jobType === 'AIR_FREIGHT_EXPORT'
+  ) {
     transformed.awb = {
       masterAirWaybill: job.masterAirWaybill || '',
       houseAirWaybill: job.houseAirWaybill || '',
     };
-  } else if (job.jobType === 'SEA_FREIGHT') {
+  } else if (
+    job.jobType === 'SEA_FREIGHT_IMPORT' ||
+    job.jobType === 'SEA_FREIGHT_EXPORT'
+  ) {
     transformed.billOfLading = {
       masterBL: job.masterBL || '',
       houseBL: job.houseBL || '',
@@ -151,11 +205,8 @@ export default async function handler(request, response) {
         // Flatten nested data structures for database storage
         const flattenedData = flattenJobData(jobData);
 
-        // Generate unique job number
-        const jobNumber = `JOB-${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 5)
-          .toUpperCase()}`;
+        // Generate automatic job number based on job type
+        const jobNumber = await generateJobNumber(flattenedData.jobType);
 
         const newJob = await prisma.logisticsJob.create({
           data: {
