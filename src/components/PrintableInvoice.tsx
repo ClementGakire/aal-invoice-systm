@@ -475,7 +475,7 @@ export default function PrintableInvoice({
             {/* Header */}
             <div className="flex items-start justify-between mb-3 print:mb-1">
               <div className="flex items-center gap-3 print:gap-1">
-                <div className="w-10 h-10 print:w-6 print:h-6">
+                <div className="w-32 h-32 print:w-6 print:h-32">
                   <img
                     src={companyConfig.logo}
                     alt={`${companyConfig.name} Logo`}
