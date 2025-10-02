@@ -104,11 +104,12 @@ const companyConfig = {
     branch: 'Head Office',
   },
   paymentTerms: [
-    'Payment due within 30 days of invoice date',
+    'Payment is prepaid on export',
     'Late payment attracts 2% monthly interest',
     'All payments should be made in USD',
     'Bank charges to be borne by client',
     'Quote invoice number on payment',
+    'Quotation valid for 10 days',
   ],
 };
 
