@@ -127,16 +127,18 @@ export default function PrintableInvoice({
 
   const handlePrint = () => {
     // Apply dynamic scaling before printing
-    const printContainer = document.querySelector('.invoice-container') as HTMLElement;
+    const printContainer = document.querySelector(
+      '.invoice-container'
+    ) as HTMLElement;
     if (printContainer) {
       // Calculate optimal scale to fit content on one page
       const maxPrintHeight = 11 * 72 - 40; // 11 inches minus margins in points
       const currentHeight = printContainer.scrollHeight;
       const scale = Math.min(0.65, maxPrintHeight / currentHeight);
-      
+
       // Apply the calculated scale
       printContainer.style.setProperty('--print-scale', scale.toString());
-      
+
       // Add dynamic scaling CSS if not already present
       let dynamicStyle = document.getElementById('dynamic-print-scale');
       if (!dynamicStyle) {
@@ -144,7 +146,7 @@ export default function PrintableInvoice({
         dynamicStyle.id = 'dynamic-print-scale';
         document.head.appendChild(dynamicStyle);
       }
-      
+
       dynamicStyle.textContent = `
         @media print {
           .invoice-container {
@@ -154,7 +156,7 @@ export default function PrintableInvoice({
         }
       `;
     }
-    
+
     // Small delay to ensure styles are applied
     setTimeout(() => {
       window.print();
@@ -176,20 +178,21 @@ export default function PrintableInvoice({
   // Set up auto-scaling for print
   React.useEffect(() => {
     const setupAutoScale = () => {
-      const printContainer = document.querySelector('.invoice-container') as HTMLElement;
+      const printContainer = document.querySelector(
+        '.invoice-container'
+      ) as HTMLElement;
       if (printContainer) {
         // Set initial scale variable
         printContainer.style.setProperty('--print-scale', '0.65');
       }
     };
-    
+
     // Setup after a short delay to ensure DOM is ready
     setTimeout(setupAutoScale, 100);
   }, []);
 
   // Debug logging
   React.useEffect(() => {
-  
     if (invoice.jobId && jobs.length > 0) {
       console.log(
         'PrintableInvoice - Job IDs available:',
@@ -513,7 +516,9 @@ export default function PrintableInvoice({
             {/* Client and Invoice Details */}
             <div className="flex justify-between mb-4 print:mb-2">
               <div className="w-1/2">
-                <div className="font-semibold mb-1 print:mb-0.5 print:text-[6px]">To,</div>
+                <div className="font-semibold mb-1 print:mb-0.5 print:text-[6px]">
+                  To,
+                </div>
                 <div className="font-bold">
                   {associatedClient?.name || invoice.clientName}
                 </div>
@@ -620,7 +625,9 @@ export default function PrintableInvoice({
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium text-sm">Service Type:</span>
+                        <span className="font-medium text-sm">
+                          Service Type:
+                        </span>
                         <br />
                         <span className="text-blue-600 font-medium">
                           {getJobTypeDisplayName(associatedJob.jobType)}
@@ -634,7 +641,9 @@ export default function PrintableInvoice({
                         Destination & Consignee
                       </div>
                       <div>
-                        <span className="font-medium text-sm">Port of Discharge:</span>
+                        <span className="font-medium text-sm">
+                          Port of Discharge:
+                        </span>
                         <br />
                         <span className="text-gray-600 text-sm">
                           {associatedJob.portOfDischarge || '-'}
@@ -655,7 +664,9 @@ export default function PrintableInvoice({
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium text-sm">Shipment Date:</span>
+                        <span className="font-medium text-sm">
+                          Shipment Date:
+                        </span>
                         <br />
                         <span className="text-gray-600 text-sm">
                           {associatedJob.createdAt
@@ -673,14 +684,18 @@ export default function PrintableInvoice({
                       {isAirFreightJob(associatedJob) && (
                         <>
                           <div>
-                            <span className="font-medium text-sm">Master AWB:</span>
+                            <span className="font-medium text-sm">
+                              Master AWB:
+                            </span>
                             <br />
                             <span className="text-gray-600 text-sm">
                               {associatedJob.awb?.masterAirWaybill || '-'}
                             </span>
                           </div>
                           <div>
-                            <span className="font-medium text-sm">House AWB:</span>
+                            <span className="font-medium text-sm">
+                              House AWB:
+                            </span>
                             <br />
                             <span className="text-gray-600 text-sm">
                               {associatedJob.awb?.houseAirWaybill || '-'}
@@ -691,14 +706,18 @@ export default function PrintableInvoice({
                       {isSeaFreightJob(associatedJob) && (
                         <>
                           <div>
-                            <span className="font-medium text-sm">Master B/L:</span>
+                            <span className="font-medium text-sm">
+                              Master B/L:
+                            </span>
                             <br />
                             <span className="text-gray-600 text-sm">
                               {associatedJob.billOfLading?.masterBL || '-'}
                             </span>
                           </div>
                           <div>
-                            <span className="font-medium text-sm">House B/L:</span>
+                            <span className="font-medium text-sm">
+                              House B/L:
+                            </span>
                             <br />
                             <span className="text-gray-600 text-sm">
                               {associatedJob.billOfLading?.houseBL || '-'}
@@ -709,14 +728,18 @@ export default function PrintableInvoice({
                       {isRoadFreightJob(associatedJob) && (
                         <>
                           <div>
-                            <span className="font-medium text-sm">Plate Number:</span>
+                            <span className="font-medium text-sm">
+                              Plate Number:
+                            </span>
                             <br />
                             <span className="text-gray-600 text-sm">
                               {associatedJob.plateNumber || '-'}
                             </span>
                           </div>
                           <div>
-                            <span className="font-medium text-sm">Container No:</span>
+                            <span className="font-medium text-sm">
+                              Container No:
+                            </span>
                             <br />
                             <span className="text-gray-600 text-sm">
                               {associatedJob.containerNumber || '-'}
@@ -742,7 +765,9 @@ export default function PrintableInvoice({
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-sm">Description of Goods:</span>
+                      <span className="font-medium text-sm">
+                        Description of Goods:
+                      </span>
                       <br />
                       <span className="text-gray-600 text-sm">
                         {associatedJob.goodDescription || '-'}
@@ -758,7 +783,9 @@ export default function PrintableInvoice({
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-sm">Chargeable Weight:</span>
+                      <span className="font-medium text-sm">
+                        Chargeable Weight:
+                      </span>
                       <br />
                       <span className="text-gray-600 text-sm">
                         {associatedJob.chargeableWeight
@@ -1005,7 +1032,9 @@ export default function PrintableInvoice({
 
             {/* Remarks */}
             <div className="mb-2 print:mb-1">
-              <div className="font-semibold mb-1 print:mb-0.5 print:text-[6px]">Remarks</div>
+              <div className="font-semibold mb-1 print:mb-0.5 print:text-[6px]">
+                Remarks
+              </div>
               <div className="min-h-[30px] print:min-h-[15px] print:text-[6px] border-b border-gray-300">
                 {invoice.remarks || 'Thank you for your business'}
               </div>
@@ -1016,7 +1045,9 @@ export default function PrintableInvoice({
               <div className="grid grid-cols-2 gap-4 print:gap-2">
                 {/* Bank Information */}
                 <div className="border border-black p-2 print:p-1">
-                  <div className="font-semibold mb-1 print:mb-0.5 print:text-[6px]">Bank Details</div>
+                  <div className="font-semibold mb-1 print:mb-0.5 print:text-[6px]">
+                    Bank Details
+                  </div>
                   <div className="space-y-1 print:space-y-0.5 text-xs print:text-[5px]">
                     <div>
                       <span className="font-medium">Bank:</span>{' '}
@@ -1043,7 +1074,9 @@ export default function PrintableInvoice({
 
                 {/* Terms of Payment */}
                 <div className="border border-black p-2 print:p-1">
-                  <div className="font-semibold mb-1 print:mb-0.5 print:text-[6px]">Terms of Payment</div>
+                  <div className="font-semibold mb-1 print:mb-0.5 print:text-[6px]">
+                    Terms of Payment
+                  </div>
                   <div className="space-y-1 print:space-y-0.5 text-xs print:text-[5px]">
                     {companyConfig.paymentTerms.map((term, index) => (
                       <div key={index}>• {term}</div>
