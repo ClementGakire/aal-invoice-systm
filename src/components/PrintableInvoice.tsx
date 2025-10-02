@@ -132,9 +132,9 @@ export default function PrintableInvoice({
     ) as HTMLElement;
     if (printContainer) {
       // Calculate optimal scale to fit content on one page
-      const maxPrintHeight = 11 * 72 - 40; // 11 inches minus margins in points
+      const maxPrintHeight = 11 * 72 - 20; // 11 inches minus margins in points
       const currentHeight = printContainer.scrollHeight;
-      const scale = Math.min(0.65, maxPrintHeight / currentHeight);
+      const scale = Math.min(0.95, maxPrintHeight / currentHeight);
 
       // Apply the calculated scale
       printContainer.style.setProperty('--print-scale', scale.toString());
@@ -150,7 +150,7 @@ export default function PrintableInvoice({
       dynamicStyle.textContent = `
         @media print {
           .invoice-container {
-            transform: scale(var(--print-scale, 0.65)) !important;
+            transform: scale(var(--print-scale, 0.95)) !important;
             width: ${100 / scale}% !important;
           }
         }
@@ -183,7 +183,7 @@ export default function PrintableInvoice({
       ) as HTMLElement;
       if (printContainer) {
         // Set initial scale variable
-        printContainer.style.setProperty('--print-scale', '0.65');
+        printContainer.style.setProperty('--print-scale', '0.95');
       }
     };
 
@@ -248,7 +248,7 @@ export default function PrintableInvoice({
           @media print {
             @page {
               size: A4;
-              margin: 0.2in;
+              margin: 0.1in;
             }
             
             * {
@@ -268,12 +268,12 @@ export default function PrintableInvoice({
             .invoice-container {
               width: 100% !important;
               max-width: none !important;
-              transform: scale(0.75) !important;
+              transform: scale(0.95) !important;
               transform-origin: top left !important;
               padding: 0 !important;
               margin: 0 !important;
-              font-size: 8px !important;
-              line-height: 1.0 !important;
+              font-size: 10px !important;
+              line-height: 1.1 !important;
               box-shadow: none !important;
               height: fit-content !important;
               position: relative !important;
@@ -282,24 +282,24 @@ export default function PrintableInvoice({
             .invoice-container > div {
               max-width: none !important;
               width: 100% !important;
-              padding: 8px !important;
+              padding: 12px !important;
               margin: 0 !important;
             }
             
             /* Header adjustments */
             .invoice-header {
-              font-size: 6px !important;
-              line-height: 1.1 !important;
+              font-size: 8px !important;
+              line-height: 1.2 !important;
             }
             
             .invoice-title {
-              font-size: 12px !important;
-              margin-bottom: 8px !important;
+              font-size: 16px !important;
+              margin-bottom: 10px !important;
             }
             
             /* Table optimizations */
             .invoice-table {
-              font-size: 6px !important;
+              font-size: 8px !important;
               width: 100% !important;
               border-collapse: collapse !important;
               margin: 0 !important;
@@ -307,9 +307,9 @@ export default function PrintableInvoice({
             
             .invoice-table th,
             .invoice-table td {
-              padding: 1px 3px !important;
-              font-size: 6px !important;
-              line-height: 1.1 !important;
+              padding: 2px 4px !important;
+              font-size: 8px !important;
+              line-height: 1.2 !important;
               border: 1px solid #000 !important;
             }
             
@@ -320,18 +320,18 @@ export default function PrintableInvoice({
             
             /* Job details section */
             .job-details-section {
-              font-size: 6px !important;
-              margin-bottom: 6px !important;
+              font-size: 8px !important;
+              margin-bottom: 8px !important;
             }
             
             .job-details-section .grid {
-              gap: 2px !important;
+              gap: 4px !important;
             }
             
             .job-details-section .text-xs,
             .job-details-section .text-sm {
-              font-size: 5px !important;
-              line-height: 1.1 !important;
+              font-size: 7px !important;
+              line-height: 1.2 !important;
             }
             
             .job-details-section .bg-gray-50 {
@@ -374,23 +374,23 @@ export default function PrintableInvoice({
             
             /* Font size adjustments */
             .text-xs {
-              font-size: 5px !important;
-            }
-            
-            .text-sm {
-              font-size: 6px !important;
-            }
-            
-            .text-base {
               font-size: 7px !important;
             }
             
-            .text-lg {
+            .text-sm {
               font-size: 8px !important;
             }
             
-            .text-xl, .text-2xl {
+            .text-base {
+              font-size: 9px !important;
+            }
+            
+            .text-lg {
               font-size: 10px !important;
+            }
+            
+            .text-xl, .text-2xl {
+              font-size: 14px !important;
             }
             
             /* Logo adjustments */
@@ -437,13 +437,9 @@ export default function PrintableInvoice({
               page-break-inside: avoid !important;
             }
             
-            /* Final container scaling for perfect fit */
-            @media print {
-              @page { margin: 0.15in; }
-              .invoice-container {
-                transform: scale(0.65) !important;
-                width: 153.8% !important;
-              }
+            /* Ensure content doesn't overflow */
+            .invoice-container {
+              overflow: visible !important;
             }
           }
           
