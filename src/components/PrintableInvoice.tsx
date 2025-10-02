@@ -97,10 +97,10 @@ const companyConfig = {
   logo: '/logo.jpeg',
   watermark: '/watermark.jpeg',
   bankDetails: {
-    bank: 'Bank of Kigali',
-    accountName: 'Aviation Africa Logistics',
-    accountNumber: '9030020478362',
-    swiftCode: 'BKIGRWRW',
+    bank: 'Access Bank Rwanda',
+    accountName: 'Aviation Africa Logistics Ltd',
+    accountNumber: '7002100201786701',
+    swiftCode: 'BKORRWRWXXX',
     branch: 'Head Office',
   },
   paymentTerms: [
@@ -422,26 +422,26 @@ export default function PrintableInvoice({
                       <div>
                         <span className="font-medium">Port of Loading:</span>
                         <br />
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-sm">
                           {associatedJob.portOfLoading || '-'}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Shipper:</span>
+                        <span className="font-medium text-sm">Shipper:</span>
                         <br />
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-sm">
                           {associatedJob.shipper || '-'}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Job Number:</span>
+                        <span className="font-medium text-sm">Job Number:</span>
                         <br />
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-sm">
                           {associatedJob.jobNumber}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Service Type:</span>
+                        <span className="font-medium text-sm">Service Type:</span>
                         <br />
                         <span className="text-blue-600 font-medium">
                           {getJobTypeDisplayName(associatedJob.jobType)}
@@ -455,30 +455,30 @@ export default function PrintableInvoice({
                         Destination & Consignee
                       </div>
                       <div>
-                        <span className="font-medium">Port of Discharge:</span>
+                        <span className="font-medium text-sm">Port of Discharge:</span>
                         <br />
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-sm">
                           {associatedJob.portOfDischarge || '-'}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Consignee:</span>
+                        <span className="font-medium text-sm">Consignee:</span>
                         <br />
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-sm">
                           {associatedJob.consignee || '-'}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Client:</span>
+                        <span className="font-medium text-sm">Client:</span>
                         <br />
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-sm">
                           {associatedJob.clientName || invoice.clientName}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Shipment Date:</span>
+                        <span className="font-medium text-sm">Shipment Date:</span>
                         <br />
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-sm">
                           {associatedJob.createdAt
                             ? formatDate(associatedJob.createdAt)
                             : '-'}
@@ -494,16 +494,16 @@ export default function PrintableInvoice({
                       {isAirFreightJob(associatedJob) && (
                         <>
                           <div>
-                            <span className="font-medium">Master AWB:</span>
+                            <span className="font-medium text-sm">Master AWB:</span>
                             <br />
-                            <span className="text-gray-600">
+                            <span className="text-gray-600 text-sm">
                               {associatedJob.awb?.masterAirWaybill || '-'}
                             </span>
                           </div>
                           <div>
-                            <span className="font-medium">House AWB:</span>
+                            <span className="font-medium text-sm">House AWB:</span>
                             <br />
-                            <span className="text-gray-600">
+                            <span className="text-gray-600 text-sm">
                               {associatedJob.awb?.houseAirWaybill || '-'}
                             </span>
                           </div>
@@ -512,16 +512,16 @@ export default function PrintableInvoice({
                       {isSeaFreightJob(associatedJob) && (
                         <>
                           <div>
-                            <span className="font-medium">Master B/L:</span>
+                            <span className="font-medium text-sm">Master B/L:</span>
                             <br />
-                            <span className="text-gray-600">
+                            <span className="text-gray-600 text-sm">
                               {associatedJob.billOfLading?.masterBL || '-'}
                             </span>
                           </div>
                           <div>
-                            <span className="font-medium">House B/L:</span>
+                            <span className="font-medium text-sm">House B/L:</span>
                             <br />
-                            <span className="text-gray-600">
+                            <span className="text-gray-600 text-sm">
                               {associatedJob.billOfLading?.houseBL || '-'}
                             </span>
                           </div>
@@ -530,16 +530,16 @@ export default function PrintableInvoice({
                       {isRoadFreightJob(associatedJob) && (
                         <>
                           <div>
-                            <span className="font-medium">Plate Number:</span>
+                            <span className="font-medium text-sm">Plate Number:</span>
                             <br />
-                            <span className="text-gray-600">
+                            <span className="text-gray-600 text-sm">
                               {associatedJob.plateNumber || '-'}
                             </span>
                           </div>
                           <div>
-                            <span className="font-medium">Container No:</span>
+                            <span className="font-medium text-sm">Container No:</span>
                             <br />
-                            <span className="text-gray-600">
+                            <span className="text-gray-600 text-sm">
                               {associatedJob.containerNumber || '-'}
                             </span>
                           </div>
@@ -556,32 +556,32 @@ export default function PrintableInvoice({
                   </div>
                   <div className="grid grid-cols-4 gap-2 text-xs bg-gray-50 p-3 rounded">
                     <div>
-                      <span className="font-medium">Package Type:</span>
+                      <span className="font-medium text-sm">Package Type:</span>
                       <br />
-                      <span className="text-gray-600">
+                      <span className="text-gray-600 text-sm">
                         {associatedJob.package || '-'}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium">Description of Goods:</span>
+                      <span className="font-medium text-sm">Description of Goods:</span>
                       <br />
-                      <span className="text-gray-600">
+                      <span className="text-gray-600 text-sm">
                         {associatedJob.goodDescription || '-'}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium">Gross Weight:</span>
+                      <span className="font-medium text-sm">Gross Weight:</span>
                       <br />
-                      <span className="text-gray-600">
+                      <span className="text-gray-600 text-sm">
                         {associatedJob.grossWeight
                           ? `${associatedJob.grossWeight} kg`
                           : '-'}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium">Chargeable Weight:</span>
+                      <span className="font-medium text-sm">Chargeable Weight:</span>
                       <br />
-                      <span className="text-gray-600">
+                      <span className="text-gray-600 text-sm">
                         {associatedJob.chargeableWeight
                           ? `${associatedJob.chargeableWeight} kg`
                           : '-'}
