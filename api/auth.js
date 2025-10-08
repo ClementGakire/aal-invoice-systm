@@ -1,5 +1,7 @@
 // Import edge-compatible Prisma client
 import prisma from '../lib/prisma-edge.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export default async function handler(request, response) {
   // Enable CORS
@@ -58,21 +60,17 @@ export default async function handler(request, response) {
       });
     }
 
-    // For now, accept any password for demonstration
-    // In a real system, you would hash and compare passwords
-    const validPasswords = {
-      'musoni@aal.rw': 'musoni123',
-      'tito@aal.rw': 'tito123',
-      'jimmy@aal.rw': 'jimmy123',
-      'steven@aal.rw': 'steven123',
-      'shamuso@aal.rw': 'shamuso123',
-      'danny.sales@aal.rw': 'danny123',
-      'test@example.com': 'test123',
-    };
+    // Verify password using bcrypt
+    if (!user.password) {
+      console.log('❌ No password set for user');
+      return response.status(401).json({
+        error: 'Invalid credentials',
+      });
+    }
 
-    const expectedPassword = validPasswords[email] || 'default123';
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (password !== expectedPassword) {
+    if (!isPasswordValid) {
       console.log('❌ Invalid password');
       return response.status(401).json({
         error: 'Invalid credentials',
@@ -80,6 +78,23 @@ export default async function handler(request, response) {
     }
 
     console.log('✅ Authentication successful for:', user.name);
+
+    // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET || 'your-default-secret-change-in-production';
+    const tokenPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token = jwt.sign(
+      tokenPayload,
+      jwtSecret,
+      {
+        expiresIn: '24h', // Token expires in 24 hours
+        issuer: 'aal-invoice-system',
+      }
+    );
 
     // Return user data (excluding sensitive information)
     const userResponse = {
@@ -98,7 +113,7 @@ export default async function handler(request, response) {
     return response.status(200).json({
       message: 'Authentication successful',
       user: userResponse,
-      token: `mock_token_${user.id}`, // In a real system, generate a JWT token
+      token: token,
     });
   } catch (error) {
     console.error('🚨 Auth Error:', error);
