@@ -162,7 +162,7 @@ export default function InvoicesPage() {
         <h2 className="page-title">Invoices</h2>
         <div className="flex gap-2">
           <CreateInvoiceFromJobButton />
-          
+
           <NewInvoiceButton onInvoiceCreated={createInvoice} />
           <button
             onClick={() => {
@@ -576,9 +576,8 @@ function EditInvoiceModal({
   const [currency, setCurrency] = useState(invoice.currency);
 
   const handleSave = () => {
-    if (!number.trim() || !clientName.trim()) return;
+    if (!clientName.trim()) return;
     onSave({
-      number,
       status,
       total: Number(total) || 0,
       currency,
@@ -601,15 +600,16 @@ function EditInvoiceModal({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Invoice Number *
+              Invoice Number (Auto-generated)
             </label>
             <input
               value={number}
-              onChange={(e) => setNumber(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
-              placeholder="INV-001"
-              autoFocus
+              readOnly
+              className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-600"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Invoice number cannot be changed after creation
+            </p>
           </div>
 
           <div>

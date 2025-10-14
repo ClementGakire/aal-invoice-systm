@@ -257,9 +257,7 @@ export default function CreateInvoiceFromJobButton({
 
   const handleCreateInvoice = async () => {
     if (!selectedJobId || serviceLineItems.length === 0) {
-      alert(
-        'Please select a job and add at least one service'
-      );
+      alert('Please select a job and add at least one service');
       return;
     }
 
@@ -393,7 +391,7 @@ export default function CreateInvoiceFromJobButton({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Due Date
+                    Invoice Date
                   </label>
                   <input
                     type="date"
