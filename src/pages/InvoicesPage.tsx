@@ -580,7 +580,7 @@ function EditInvoiceModal({
     invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : ''
   );
   const [remarks, setRemarks] = useState(invoice.remarks || '');
-  
+
   // Line items
   const [lineItems, setLineItems] = useState(
     invoice.lineItems?.map((item: any) => ({
@@ -597,9 +597,18 @@ function EditInvoiceModal({
 
   // Calculate totals
   const calculateTotals = () => {
-    const subTotal = lineItems.reduce((sum: number, item: any) => sum + item.amount, 0);
-    const taxTotal = lineItems.reduce((sum: number, item: any) => sum + (item.taxAmount || 0), 0);
-    const total = lineItems.reduce((sum: number, item: any) => sum + item.billingAmount, 0);
+    const subTotal = lineItems.reduce(
+      (sum: number, item: any) => sum + item.amount,
+      0
+    );
+    const taxTotal = lineItems.reduce(
+      (sum: number, item: any) => sum + (item.taxAmount || 0),
+      0
+    );
+    const total = lineItems.reduce(
+      (sum: number, item: any) => sum + item.billingAmount,
+      0
+    );
     return { subTotal, taxTotal, total };
   };
 
@@ -625,24 +634,26 @@ function EditInvoiceModal({
 
   // Update a line item
   const updateLineItem = (id: string, updates: any) => {
-    setLineItems(lineItems.map((item: any) => {
-      if (item.id === id) {
-        const updated = { ...item, ...updates };
-        // Recalculate amounts if rate or tax changes
-        if ('rate' in updates || 'taxPercent' in updates) {
-          updated.amount = updated.rate;
-          updated.taxAmount = (updated.rate * updated.taxPercent) / 100;
-          updated.billingAmount = updated.amount + updated.taxAmount;
+    setLineItems(
+      lineItems.map((item: any) => {
+        if (item.id === id) {
+          const updated = { ...item, ...updates };
+          // Recalculate amounts if rate or tax changes
+          if ('rate' in updates || 'taxPercent' in updates) {
+            updated.amount = updated.rate;
+            updated.taxAmount = (updated.rate * updated.taxPercent) / 100;
+            updated.billingAmount = updated.amount + updated.taxAmount;
+          }
+          return updated;
         }
-        return updated;
-      }
-      return item;
-    }));
+        return item;
+      })
+    );
   };
 
   const handleSave = () => {
     const totals = calculateTotals();
-    
+
     onSave({
       status,
       currency,
@@ -775,42 +786,65 @@ function EditInvoiceModal({
                   Add Item
                 </button>
               </div>
-              
+
               <div className="space-y-3 max-h-40 overflow-y-auto">
                 {lineItems.map((item: any) => (
-                  <div key={item.id} className="border rounded-lg p-3 bg-gray-50">
+                  <div
+                    key={item.id}
+                    className="border rounded-lg p-3 bg-gray-50"
+                  >
                     <div className="grid grid-cols-12 gap-2 items-end">
                       <div className="col-span-4">
-                        <label className="block text-xs text-gray-600 mb-1">Description</label>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Description
+                        </label>
                         <input
                           value={item.description}
-                          onChange={(e) => updateLineItem(item.id, { description: e.target.value })}
+                          onChange={(e) =>
+                            updateLineItem(item.id, {
+                              description: e.target.value,
+                            })
+                          }
                           className="w-full px-2 py-1 text-sm border rounded"
                           placeholder="Item description"
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs text-gray-600 mb-1">Rate</label>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Rate
+                        </label>
                         <input
                           type="number"
                           step="0.01"
                           value={item.rate}
-                          onChange={(e) => updateLineItem(item.id, { rate: parseFloat(e.target.value) || 0 })}
+                          onChange={(e) =>
+                            updateLineItem(item.id, {
+                              rate: parseFloat(e.target.value) || 0,
+                            })
+                          }
                           className="w-full px-2 py-1 text-sm border rounded"
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs text-gray-600 mb-1">Tax %</label>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Tax %
+                        </label>
                         <input
                           type="number"
                           step="0.1"
                           value={item.taxPercent}
-                          onChange={(e) => updateLineItem(item.id, { taxPercent: parseFloat(e.target.value) || 0 })}
+                          onChange={(e) =>
+                            updateLineItem(item.id, {
+                              taxPercent: parseFloat(e.target.value) || 0,
+                            })
+                          }
                           className="w-full px-2 py-1 text-sm border rounded"
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs text-gray-600 mb-1">Total</label>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Total
+                        </label>
                         <input
                           value={item.billingAmount.toFixed(2)}
                           readOnly
@@ -838,15 +872,21 @@ function EditInvoiceModal({
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>{currency} {calculateTotals().subTotal.toFixed(2)}</span>
+                  <span>
+                    {currency} {calculateTotals().subTotal.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax:</span>
-                  <span>{currency} {calculateTotals().taxTotal.toFixed(2)}</span>
+                  <span>
+                    {currency} {calculateTotals().taxTotal.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between font-medium border-t pt-1">
                   <span>Total:</span>
-                  <span>{currency} {calculateTotals().total.toFixed(2)}</span>
+                  <span>
+                    {currency} {calculateTotals().total.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
