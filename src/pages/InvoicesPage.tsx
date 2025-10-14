@@ -569,24 +569,98 @@ function EditInvoiceModal({
   onClose: () => void;
   onSave: (updates: any) => void;
 }) {
+  // Basic invoice fields
   const [number, setNumber] = useState(invoice.number);
-  const [clientName, setClientName] = useState(invoice.client?.name || '');
   const [status, setStatus] = useState(invoice.status);
-  const [total, setTotal] = useState(invoice.total.toString());
   const [currency, setCurrency] = useState(invoice.currency);
+  const [invoiceDate, setInvoiceDate] = useState(
+    new Date(invoice.invoiceDate).toISOString().split('T')[0]
+  );
+  const [dueDate, setDueDate] = useState(
+    invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : ''
+  );
+  const [remarks, setRemarks] = useState(invoice.remarks || '');
+  
+  // Line items
+  const [lineItems, setLineItems] = useState(
+    invoice.lineItems?.map((item: any) => ({
+      id: item.id,
+      description: item.description,
+      rate: item.rate,
+      currency: item.currency,
+      amount: item.amount,
+      taxPercent: item.taxPercent || 0,
+      taxAmount: item.taxAmount || 0,
+      billingAmount: item.billingAmount,
+    })) || []
+  );
+
+  // Calculate totals
+  const calculateTotals = () => {
+    const subTotal = lineItems.reduce((sum: number, item: any) => sum + item.amount, 0);
+    const taxTotal = lineItems.reduce((sum: number, item: any) => sum + (item.taxAmount || 0), 0);
+    const total = lineItems.reduce((sum: number, item: any) => sum + item.billingAmount, 0);
+    return { subTotal, taxTotal, total };
+  };
+
+  // Add a new line item
+  const addLineItem = () => {
+    const newItem = {
+      id: `temp_${Date.now()}`,
+      description: '',
+      rate: 0,
+      currency: currency,
+      amount: 0,
+      taxPercent: 0,
+      taxAmount: 0,
+      billingAmount: 0,
+    };
+    setLineItems([...lineItems, newItem]);
+  };
+
+  // Remove a line item
+  const removeLineItem = (id: string) => {
+    setLineItems(lineItems.filter((item: any) => item.id !== id));
+  };
+
+  // Update a line item
+  const updateLineItem = (id: string, updates: any) => {
+    setLineItems(lineItems.map((item: any) => {
+      if (item.id === id) {
+        const updated = { ...item, ...updates };
+        // Recalculate amounts if rate or tax changes
+        if ('rate' in updates || 'taxPercent' in updates) {
+          updated.amount = updated.rate;
+          updated.taxAmount = (updated.rate * updated.taxPercent) / 100;
+          updated.billingAmount = updated.amount + updated.taxAmount;
+        }
+        return updated;
+      }
+      return item;
+    }));
+  };
 
   const handleSave = () => {
-    if (!clientName.trim()) return;
+    const totals = calculateTotals();
+    
     onSave({
       status,
-      total: Number(total) || 0,
       currency,
+      invoiceDate: new Date(invoiceDate).toISOString(),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      remarks,
+      subTotal: totals.subTotal,
+      total: totals.total,
+      lineItems: lineItems.map((item: any) => ({
+        ...item,
+        id: item.id.startsWith('temp_') ? undefined : item.id, // Remove temp IDs for new items
+      })),
     });
   };
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30">
-      <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md animate-fadein">
+      <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] animate-fadein">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Edit Invoice</h3>
           <button
@@ -597,76 +671,199 @@ function EditInvoiceModal({
           </button>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Invoice Number (Auto-generated)
-            </label>
-            <input
-              value={number}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-600"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Invoice number cannot be changed after creation
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Client Name *
-            </label>
-            <input
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
-              placeholder="Client name"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+        <div className="max-h-[70vh] overflow-y-auto">
+          <div className="space-y-4">
+            {/* Invoice Number - Read Only */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Total *
+                Invoice Number (Auto-generated)
               </label>
               <input
-                value={total}
-                onChange={(e) => setTotal(e.target.value)}
-                type="number"
-                step="0.01"
-                className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
-                placeholder="0.00"
+                value={number}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-600"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Invoice number cannot be changed after creation
+              </p>
             </div>
+
+            {/* Client Info - Read Only */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Currency
+                Client
               </label>
               <input
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
+                value={invoice.client?.name || 'Unknown Client'}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-600"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Client cannot be changed after creation
+              </p>
+            </div>
+
+            {/* Dates and Status */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Invoice Date
+                </label>
+                <input
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => setInvoiceDate(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Currency
+                </label>
+                <input
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
+                  placeholder="USD"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
+                >
+                  <option value="DRAFT">Draft</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="PAID">Paid</option>
+                  <option value="UNPAID">Unpaid</option>
+                  <option value="OVERDUE">Overdue</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Line Items */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Line Items
+                </label>
+                <button
+                  type="button"
+                  onClick={addLineItem}
+                  className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Item
+                </button>
+              </div>
+              
+              <div className="space-y-3 max-h-40 overflow-y-auto">
+                {lineItems.map((item: any) => (
+                  <div key={item.id} className="border rounded-lg p-3 bg-gray-50">
+                    <div className="grid grid-cols-12 gap-2 items-end">
+                      <div className="col-span-4">
+                        <label className="block text-xs text-gray-600 mb-1">Description</label>
+                        <input
+                          value={item.description}
+                          onChange={(e) => updateLineItem(item.id, { description: e.target.value })}
+                          className="w-full px-2 py-1 text-sm border rounded"
+                          placeholder="Item description"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs text-gray-600 mb-1">Rate</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={item.rate}
+                          onChange={(e) => updateLineItem(item.id, { rate: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-2 py-1 text-sm border rounded"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs text-gray-600 mb-1">Tax %</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={item.taxPercent}
+                          onChange={(e) => updateLineItem(item.id, { taxPercent: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-2 py-1 text-sm border rounded"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs text-gray-600 mb-1">Total</label>
+                        <input
+                          value={item.billingAmount.toFixed(2)}
+                          readOnly
+                          className="w-full px-2 py-1 text-sm border bg-gray-100 rounded"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <button
+                          type="button"
+                          onClick={() => removeLineItem(item.id)}
+                          className="w-full px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                        >
+                          <Trash2 className="w-3 h-3 mx-auto" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Totals Summary */}
+            <div className="bg-gray-100 rounded-lg p-3">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Totals</h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>{currency} {calculateTotals().subTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tax:</span>
+                  <span>{currency} {calculateTotals().taxTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-medium border-t pt-1">
+                  <span>Total:</span>
+                  <span>{currency} {calculateTotals().total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Remarks */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Remarks
+              </label>
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={3}
                 className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
-                placeholder="USD"
+                placeholder="Additional notes or remarks..."
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
-            >
-              <option value="DRAFT">Draft</option>
-              <option value="PENDING">Pending</option>
-              <option value="PAID">Paid</option>
-              <option value="UNPAID">Unpaid</option>
-              <option value="OVERDUE">Overdue</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
           </div>
         </div>
 
