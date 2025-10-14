@@ -304,14 +304,11 @@ export function generateBookingNumber(): string {
 }
 
 // Helper function to generate invoice number
-export function generateInvoiceNumber(): string {
+export function generateInvoiceNumber(sequenceNumber: number = 1): string {
   const date = new Date();
   const year = date.getFullYear().toString().slice(-2);
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const random = Math.floor(Math.random() * 99999)
-    .toString()
-    .padStart(5, '0');
-  return `RW-CI-${year}-${random}`;
+  const sequence = sequenceNumber.toString().padStart(4, '0');
+  return `AAL-AR-${year}-${sequence}`;
 }
 
 // Helper function to generate automatic job number based on job type

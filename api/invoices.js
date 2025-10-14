@@ -1,6 +1,39 @@
 // Import edge-compatible Prisma client
 import prisma from '../lib/prisma-edge.js';
 
+// Generate automatic invoice number with format AAL-AR-YY-XXXX
+async function generateInvoiceNumber() {
+  const year = new Date().getFullYear().toString().slice(-2);
+  const invoiceNumberPrefix = `AAL-AR-${year}-`;
+
+  // Find the latest invoice number with this prefix to determine the next sequence
+  const latestInvoice = await prisma.invoice.findFirst({
+    where: {
+      number: {
+        startsWith: invoiceNumberPrefix,
+      },
+    },
+    orderBy: {
+      number: 'desc',
+    },
+  });
+
+  let sequenceNumber = 1;
+  if (latestInvoice && latestInvoice.number) {
+    // Extract sequence number from existing invoice number
+    const parts = latestInvoice.number.split('-');
+    if (parts.length === 4) {
+      const lastSequence = parseInt(parts[3], 10);
+      if (!isNaN(lastSequence)) {
+        sequenceNumber = lastSequence + 1;
+      }
+    }
+  }
+
+  const sequence = sequenceNumber.toString().padStart(4, '0');
+  return `${invoiceNumberPrefix}${sequence}`;
+}
+
 export default async function handler(request, response) {
   // Enable CORS
   response.setHeader('Access-Control-Allow-Origin', '*');
@@ -116,10 +149,7 @@ export default async function handler(request, response) {
         }
 
         // Generate unique invoice number
-        const invoiceNumber = `INV-${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 5)
-          .toUpperCase()}`;
+        const invoiceNumber = await generateInvoiceNumber();
 
         const newInvoice = await prisma.invoice.create({
           data: {
