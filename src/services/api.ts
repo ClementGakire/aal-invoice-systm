@@ -8,10 +8,6 @@ import {
   addJob as addJobMock,
   updateJob as updateJobMock,
   deleteJob as deleteJobMock,
-  invoicesMock,
-  addInvoice as addInvoiceMock,
-  updateInvoice as updateInvoiceMock,
-  deleteInvoice as deleteInvoiceMock,
   servicesMock,
   addService as addServiceMock,
   updateService as updateServiceMock,
@@ -300,76 +296,46 @@ function generateId(): string {
 export const invoiceApi = {
   // Get all invoices
   getAll: async () => {
-    try {
-      return await apiCall<{ invoices: any[]; total: number }>('/invoices');
-    } catch (error) {
-      return { invoices: invoicesMock, total: invoicesMock.length };
-    }
+    return await apiCall<{ invoices: any[]; total: number }>('/invoices');
   },
 
   // Get invoice by ID
   getById: async (id: string) => {
-    try {
-      return await apiCall<any>(`/invoices?id=${id}`);
-    } catch (error) {
-      const invoice = invoicesMock.find((i) => i.id === id);
-      if (!invoice) throw new Error('Invoice not found');
-      return invoice;
-    }
+    return await apiCall<any>(`/invoices?id=${id}`);
   },
 
   // Create new invoice
   create: async (invoiceData: any) => {
-    try {
-      const result = await apiCall<any>('/invoices', {
-        method: 'POST',
-        body: JSON.stringify(invoiceData),
-      });
+    const result = await apiCall<any>('/invoices', {
+      method: 'POST',
+      body: JSON.stringify(invoiceData),
+    });
 
-      // Extract the invoice object from the API response
-      const invoice = result?.invoice || result;
-      return invoice;
-    } catch (error) {
-      const newInvoice = { ...invoiceData, id: generateId() };
-      addInvoiceMock(newInvoice);
-      return newInvoice;
-    }
+    // Extract the invoice object from the API response
+    const invoice = result?.invoice || result;
+    return invoice;
   },
 
   // Update invoice
   update: async (id: string, invoiceData: any) => {
-    try {
-      const result = await apiCall<any>(`/invoices?id=${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(invoiceData),
-      });
+    const result = await apiCall<any>(`/invoices?id=${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(invoiceData),
+    });
 
-      // Extract the invoice object from the API response
-      const invoice = result?.invoice || result;
-      return invoice;
-    } catch (error) {
-      updateInvoiceMock(id, invoiceData);
-      return { ...invoiceData, id };
-    }
+    // Extract the invoice object from the API response
+    const invoice = result?.invoice || result;
+    return invoice;
   },
 
   // Delete invoice
   delete: async (id: string) => {
-    try {
-      return await apiCall<{ message: string; invoice: any }>(
-        `/invoices?id=${id}`,
-        {
-          method: 'DELETE',
-        }
-      );
-    } catch (error) {
-      const invoice = invoicesMock.find((i) => i.id === id);
-      if (invoice) {
-        deleteInvoiceMock(id);
-        return { message: 'Invoice deleted successfully', invoice };
+    return await apiCall<{ message: string; invoice: any }>(
+      `/invoices?id=${id}`,
+      {
+        method: 'DELETE',
       }
-      throw new Error('Invoice not found');
-    }
+    );
   },
 };
 
@@ -505,7 +471,9 @@ export const jobsApi = {
         }>(`/jobs/${jobId}/expenses`);
       } catch (error) {
         // Mock fallback: filter expenses by jobId
-        const jobExpenses = expensesMock.filter((e) => e.jobId === jobId || e.jobNumber?.includes(jobId.slice(-4)));
+        const jobExpenses = expensesMock.filter(
+          (e) => e.jobId === jobId || e.jobNumber?.includes(jobId.slice(-4))
+        );
         const totalExpenses = jobExpenses.reduce((sum, e) => sum + e.amount, 0);
         return {
           job: { id: jobId },

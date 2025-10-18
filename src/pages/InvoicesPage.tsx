@@ -654,7 +654,7 @@ function EditInvoiceModal({
   const handleSave = () => {
     const totals = calculateTotals();
 
-    onSave({
+    const updateData = {
       status,
       currency,
       invoiceDate: new Date(invoiceDate).toISOString(),
@@ -666,7 +666,9 @@ function EditInvoiceModal({
         ...item,
         id: item.id.startsWith('temp_') ? undefined : item.id, // Remove temp IDs for new items
       })),
-    });
+    };
+
+    onSave(updateData);
   };
 
   return (
