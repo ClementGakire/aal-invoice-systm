@@ -838,7 +838,8 @@ function CreateExpenseForJobModal({
   onSuccess: () => void;
 }) {
   const { createJobExpense } = useJobExpenses(job.id);
-  const { suppliers, loading: suppliersLoading } = require('../hooks/useApi').useSuppliers();
+  const { suppliers, loading: suppliersLoading } =
+    require('../hooks/useApi').useSuppliers();
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
@@ -955,9 +956,13 @@ function CreateExpenseForJobModal({
               disabled={isCreating || suppliersLoading}
             >
               <option value="">Select supplier</option>
-              {suppliers && suppliers.length > 0 && suppliers.map((s: any) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
+              {suppliers &&
+                suppliers.length > 0 &&
+                suppliers.map((s: any) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
