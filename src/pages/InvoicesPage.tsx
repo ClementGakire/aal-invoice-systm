@@ -167,12 +167,10 @@ export default function InvoicesPage() {
           <button
             onClick={() => {
               const rows = [
-                'Number,Client,Job Number,Status,Total,Currency,Invoice Date',
+                'Number,Client,Status,Total,Currency,Invoice Date',
                 ...filteredInvoices.map(
                   (i: any) =>
-                    `${i.number},"${i.client?.name || 'Unknown'}",${
-                      i.jobNumber || ''
-                    },${i.status},${i.total},${i.currency},${new Date(
+                    `${i.number},"${i.client?.name || 'Unknown'}",${i.status},${i.total},${i.currency},${new Date(
                       i.invoiceDate
                     ).toLocaleDateString()}`
                 ),
@@ -431,15 +429,6 @@ export default function InvoicesPage() {
                     {viewingInvoice.total.toLocaleString()}
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Job ID
-                  </label>
-                  <div className="text-sm p-2 border rounded">
-                    {viewingInvoice.jobId || 'No job assigned'}
-                  </div>
-                </div>
               </div>
 
               <div>
@@ -579,13 +568,14 @@ function EditInvoiceModal({
   const [dueDate, setDueDate] = useState(
     invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : ''
   );
-  const [remarks, setRemarks] = useState(invoice.remarks || '');
+
 
   // Line items
   const [lineItems, setLineItems] = useState(
     invoice.lineItems?.map((item: any) => ({
       id: item.id,
       description: item.description,
+      basedOn: item.basedOn || 'Shipment',
       rate: item.rate,
       currency: item.currency,
       amount: item.amount,
@@ -617,6 +607,7 @@ function EditInvoiceModal({
     const newItem = {
       id: `temp_${Date.now()}`,
       description: '',
+      basedOn: 'Shipment',
       rate: 0,
       currency: currency,
       amount: 0,
@@ -659,11 +650,18 @@ function EditInvoiceModal({
       currency,
       invoiceDate: new Date(invoiceDate).toISOString(),
       dueDate: dueDate ? new Date(dueDate).toISOString() : null,
-      remarks,
+
       subTotal: totals.subTotal,
       total: totals.total,
       lineItems: lineItems.map((item: any) => ({
-        ...item,
+        description: item.description,
+        basedOn: item.basedOn || 'Shipment',
+        rate: item.rate,
+        currency: item.currency || currency,
+        amount: item.amount,
+        taxPercent: item.taxPercent || 0,
+        taxAmount: item.taxAmount || 0,
+        billingAmount: item.billingAmount,
         id: item.id.startsWith('temp_') ? undefined : item.id, // Remove temp IDs for new items
       })),
     };
@@ -796,7 +794,7 @@ function EditInvoiceModal({
                     className="border rounded-lg p-3 bg-gray-50"
                   >
                     <div className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-4">
+                      <div className="col-span-3">
                         <label className="block text-xs text-gray-600 mb-1">
                           Description
                         </label>
@@ -810,6 +808,24 @@ function EditInvoiceModal({
                           className="w-full px-2 py-1 text-sm border rounded"
                           placeholder="Item description"
                         />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Based On
+                        </label>
+                        <select
+                          value={item.basedOn || 'Shipment'}
+                          onChange={(e) =>
+                            updateLineItem(item.id, {
+                              basedOn: e.target.value,
+                            })
+                          }
+                          className="w-full px-2 py-1 text-sm border rounded"
+                        >
+                          <option value="Shipment">Shipment</option>
+                          <option value="Service">Service</option>
+                          <option value="Qty & UOM">Qty & UOM</option>
+                        </select>
                       </div>
                       <div className="col-span-2">
                         <label className="block text-xs text-gray-600 mb-1">
@@ -893,19 +909,7 @@ function EditInvoiceModal({
               </div>
             </div>
 
-            {/* Remarks */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Remarks
-              </label>
-              <textarea
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-sky-200 focus:border-sky-500"
-                placeholder="Additional notes or remarks..."
-              />
-            </div>
+
           </div>
         </div>
 
