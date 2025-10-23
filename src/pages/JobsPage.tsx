@@ -4,6 +4,7 @@ import {
   useClients,
   useJobExpenses,
   useInvoices,
+  useSuppliers,
 } from '../hooks/useApi';
 import { isUsingFallback, api } from '../services/api';
 import FallbackBanner from '../components/FallbackBanner';
@@ -838,8 +839,7 @@ function CreateExpenseForJobModal({
   onSuccess: () => void;
 }) {
   const { createJobExpense } = useJobExpenses(job.id);
-  const { suppliers, loading: suppliersLoading } =
-    require('../hooks/useApi').useSuppliers();
+  const { suppliers, loading: suppliersLoading } = useSuppliers();
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
