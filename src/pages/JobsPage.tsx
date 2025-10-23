@@ -838,10 +838,11 @@ function CreateExpenseForJobModal({
   onSuccess: () => void;
 }) {
   const { createJobExpense } = useJobExpenses(job.id);
+  const { suppliers, loading: suppliersLoading } = require('../hooks/useApi').useSuppliers();
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
-  const [supplierName, setSupplierName] = useState('');
+  const [supplierId, setSupplierId] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -852,11 +853,13 @@ function CreateExpenseForJobModal({
     setCreateError(null);
 
     try {
+      const selectedSupplier = suppliers?.find((s: any) => s.id === supplierId);
       await createJobExpense({
         title,
         amount: parseFloat(amount),
         currency,
-        supplierName: supplierName || undefined,
+        supplierId: supplierId || undefined,
+        supplierName: selectedSupplier ? selectedSupplier.name : undefined,
       });
       onSuccess();
     } catch (err) {
@@ -943,15 +946,19 @@ function CreateExpenseForJobModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Supplier Name
+              Supplier
             </label>
-            <input
-              value={supplierName}
-              onChange={(e) => setSupplierName(e.target.value)}
+            <select
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-200 focus:border-green-500"
-              placeholder="Optional supplier name"
-              disabled={isCreating}
-            />
+              disabled={isCreating || suppliersLoading}
+            >
+              <option value="">Select supplier</option>
+              {suppliers && suppliers.length > 0 && suppliers.map((s: any) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 
