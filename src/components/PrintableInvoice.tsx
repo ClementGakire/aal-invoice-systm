@@ -250,147 +250,121 @@ export default function PrintableInvoice({
               size: A4;
               margin: 0.1in;
             }
-            
             * {
               -webkit-print-color-adjust: exact !important;
               color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
-            
             body {
               margin: 0;
               padding: 0;
-              font-size: 8px;
-              line-height: 1.1;
+              font-size: 10px;
+              line-height: 1.2;
               zoom: 1;
             }
-            
             .invoice-container {
               width: 100% !important;
               max-width: none !important;
-              transform: scale(0.95) !important;
+              transform: scale(0.98) !important;
               transform-origin: top left !important;
               padding: 0 !important;
               margin: 0 !important;
-              font-size: 10px !important;
-              line-height: 1.1 !important;
+              font-size: 12px !important;
+              line-height: 1.2 !important;
               box-shadow: none !important;
               height: fit-content !important;
               position: relative !important;
             }
-            
             .invoice-container > div {
               max-width: none !important;
               width: 100% !important;
-              padding: 12px !important;
+              padding: 16px !important;
               margin: 0 !important;
             }
-            
             /* Header adjustments */
             .invoice-header {
-              font-size: 8px !important;
-              line-height: 1.2 !important;
+              font-size: 10px !important;
+              line-height: 1.3 !important;
             }
-            
             .invoice-title {
-              font-size: 16px !important;
-              margin-bottom: 10px !important;
+              font-size: 18px !important;
+              margin-bottom: 12px !important;
             }
-            
             /* Table optimizations */
             .invoice-table {
-              font-size: 8px !important;
+              font-size: 10px !important;
               width: 100% !important;
               border-collapse: collapse !important;
               margin: 0 !important;
             }
-            
             .invoice-table th,
             .invoice-table td {
-              padding: 2px 4px !important;
-              font-size: 8px !important;
-              line-height: 1.2 !important;
+              padding: 4px 6px !important;
+              font-size: 10px !important;
+              line-height: 1.3 !important;
               border: 1px solid #000 !important;
             }
-            
             .invoice-table th {
               background-color: #f3f4f6 !important;
               font-weight: bold !important;
             }
-            
             /* Job details section */
             .job-details-section {
-              font-size: 8px !important;
-              margin-bottom: 8px !important;
+              font-size: 10px !important;
+              margin-bottom: 10px !important;
             }
-            
             .job-details-section .grid {
-              gap: 4px !important;
+              gap: 6px !important;
             }
-            
             .job-details-section .text-xs,
             .job-details-section .text-sm {
-              font-size: 7px !important;
-              line-height: 1.2 !important;
+              font-size: 9px !important;
+              line-height: 1.3 !important;
             }
-            
             .job-details-section .bg-gray-50 {
               background-color: #f9fafb !important;
-              padding: 2px !important;
+              padding: 4px !important;
             }
-            
             /* Spacing optimizations */
             .mb-3, .mb-4 {
+              margin-bottom: 6px !important;
+            }
+            .mb-2 {
               margin-bottom: 4px !important;
             }
-            
-            .mb-2 {
+            .mb-1 {
               margin-bottom: 2px !important;
             }
-            
-            .mb-1 {
-              margin-bottom: 1px !important;
-            }
-            
             .p-1 {
-              padding: 1px !important;
+              padding: 2px !important;
             }
-            
             .p-2 {
-              padding: 2px !important;
+              padding: 4px !important;
             }
-            
             .p-3 {
-              padding: 2px !important;
+              padding: 4px !important;
             }
-            
             .space-y-1 > * + * {
-              margin-top: 1px !important;
-            }
-            
-            .space-y-2 > * + * {
               margin-top: 2px !important;
             }
-            
+            .space-y-2 > * + * {
+              margin-top: 4px !important;
+            }
             /* Font size adjustments */
             .text-xs {
-              font-size: 7px !important;
-            }
-            
-            .text-sm {
-              font-size: 8px !important;
-            }
-            
-            .text-base {
               font-size: 9px !important;
             }
-            
-            .text-lg {
+            .text-sm {
               font-size: 10px !important;
             }
-            
-            .text-xl, .text-2xl {
+            .text-base {
+              font-size: 12px !important;
+            }
+            .text-lg {
               font-size: 14px !important;
+            }
+            .text-xl, .text-2xl {
+              font-size: 18px !important;
             }
             
             /* Logo adjustments */
