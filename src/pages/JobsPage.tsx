@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useJobs, useClients, useJobExpenses } from '../hooks/useApi';
+import { useJobs, useClients, useJobExpenses, useInvoices } from '../hooks/useApi';
 import { isUsingFallback, api } from '../services/api';
 import FallbackBanner from '../components/FallbackBanner';
 import {
@@ -38,6 +38,9 @@ export default function JobsPage() {
   const [editingJob, setEditingJob] = useState<any | null>(null);
   const [loadingJobDetails, setLoadingJobDetails] = useState(false);
   const [creatingExpenseForJob, setCreatingExpenseForJob] = useState<any | null>(null);
+
+  // Get all invoices (for revenue summary)
+  const { invoices } = useInvoices();
 
   const handleEditJob = async (job: any) => {
     try {
@@ -651,6 +654,42 @@ export default function JobsPage() {
                     >
                       Add Expense
                     </button>
+                  </div>
+                </div>
+
+                {/* Revenue Summary (Invoices) */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-4">
+                  <h4 className="font-medium text-blue-900 mb-3">Revenue</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Total Invoiced:
+                      </span>
+                      <div className="text-sm font-bold text-blue-700">
+                        {
+                          (() => {
+                            if (!invoices || !viewingJob?.id) return '$0.00';
+                            const jobInvoices = invoices.filter((inv: any) => inv.jobId === viewingJob.id);
+                            const total = jobInvoices.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
+                            return `$${total.toFixed(2)}`;
+                          })()
+                        }
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Number of Invoices:
+                      </span>
+                      <div className="text-sm">
+                        {
+                          (() => {
+                            if (!invoices || !viewingJob?.id) return '0';
+                            const jobInvoices = invoices.filter((inv: any) => inv.jobId === viewingJob.id);
+                            return jobInvoices.length;
+                          })()
+                        } items
+                      </div>
+                    </div>
                   </div>
                 </div>
 

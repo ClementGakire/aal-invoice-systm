@@ -170,7 +170,9 @@ export default function InvoicesPage() {
                 'Number,Client,Status,Total,Currency,Invoice Date',
                 ...filteredInvoices.map(
                   (i: any) =>
-                    `${i.number},"${i.client?.name || 'Unknown'}",${i.status},${i.total},${i.currency},${new Date(
+                    `${i.number},"${i.client?.name || 'Unknown'}",${i.status},${
+                      i.total
+                    },${i.currency},${new Date(
                       i.invoiceDate
                     ).toLocaleDateString()}`
                 ),
@@ -569,7 +571,6 @@ function EditInvoiceModal({
     invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : ''
   );
 
-
   // Line items
   const [lineItems, setLineItems] = useState(
     invoice.lineItems?.map((item: any) => ({
@@ -908,8 +909,6 @@ function EditInvoiceModal({
                 </div>
               </div>
             </div>
-
-
           </div>
         </div>
 
