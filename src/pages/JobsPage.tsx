@@ -1,5 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { useJobs, useClients, useJobExpenses, useInvoices } from '../hooks/useApi';
+import {
+  useJobs,
+  useClients,
+  useJobExpenses,
+  useInvoices,
+} from '../hooks/useApi';
 import { isUsingFallback, api } from '../services/api';
 import FallbackBanner from '../components/FallbackBanner';
 import {
@@ -37,7 +42,9 @@ export default function JobsPage() {
   const [viewingJob, setViewingJob] = useState<any | null>(null);
   const [editingJob, setEditingJob] = useState<any | null>(null);
   const [loadingJobDetails, setLoadingJobDetails] = useState(false);
-  const [creatingExpenseForJob, setCreatingExpenseForJob] = useState<any | null>(null);
+  const [creatingExpenseForJob, setCreatingExpenseForJob] = useState<
+    any | null
+  >(null);
 
   // Get all invoices (for revenue summary)
   const { invoices } = useInvoices();
@@ -276,7 +283,8 @@ export default function JobsPage() {
                   </div>
                   <div>Document: {getPrimaryDocument(j)}</div>
                   <div className="font-medium text-green-700">
-                    Expenses: ${j.totalExpenses?.toFixed(2) || '0.00'} ({j.expenseCount || 0} items)
+                    Expenses: ${j.totalExpenses?.toFixed(2) || '0.00'} (
+                    {j.expenseCount || 0} items)
                   </div>
                 </div>
               </div>
@@ -666,14 +674,17 @@ export default function JobsPage() {
                         Total Invoiced:
                       </span>
                       <div className="text-sm font-bold text-blue-700">
-                        {
-                          (() => {
-                            if (!invoices || !viewingJob?.id) return '$0.00';
-                            const jobInvoices = invoices.filter((inv: any) => inv.jobId === viewingJob.id);
-                            const total = jobInvoices.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
-                            return `$${total.toFixed(2)}`;
-                          })()
-                        }
+                        {(() => {
+                          if (!invoices || !viewingJob?.id) return '$0.00';
+                          const jobInvoices = invoices.filter(
+                            (inv: any) => inv.jobId === viewingJob.id
+                          );
+                          const total = jobInvoices.reduce(
+                            (sum: number, inv: any) => sum + (inv.total || 0),
+                            0
+                          );
+                          return `$${total.toFixed(2)}`;
+                        })()}
                       </div>
                     </div>
                     <div className="flex justify-between">
@@ -681,13 +692,14 @@ export default function JobsPage() {
                         Number of Invoices:
                       </span>
                       <div className="text-sm">
-                        {
-                          (() => {
-                            if (!invoices || !viewingJob?.id) return '0';
-                            const jobInvoices = invoices.filter((inv: any) => inv.jobId === viewingJob.id);
-                            return jobInvoices.length;
-                          })()
-                        } items
+                        {(() => {
+                          if (!invoices || !viewingJob?.id) return '0';
+                          const jobInvoices = invoices.filter(
+                            (inv: any) => inv.jobId === viewingJob.id
+                          );
+                          return jobInvoices.length;
+                        })()}{' '}
+                        items
                       </div>
                     </div>
                   </div>
@@ -872,7 +884,9 @@ function CreateExpenseForJobModal({
 
         <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
           <div className="text-sm">
-            <div className="font-medium text-blue-900">Job: {job.jobNumber}</div>
+            <div className="font-medium text-blue-900">
+              Job: {job.jobNumber}
+            </div>
             <div className="text-blue-700">{job.title}</div>
             <div className="text-blue-600">Client: {job.clientName}</div>
           </div>
