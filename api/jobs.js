@@ -138,7 +138,14 @@ export default async function handler(request, response) {
                 select: { id: true, name: true, email: true },
               },
               expenses: {
-                select: { id: true, title: true, amount: true, currency: true, createdAt: true, supplierName: true },
+                select: {
+                  id: true,
+                  title: true,
+                  amount: true,
+                  currency: true,
+                  createdAt: true,
+                  supplierName: true,
+                },
               },
               invoices: {
                 select: { id: true, number: true, status: true, total: true },
@@ -151,13 +158,16 @@ export default async function handler(request, response) {
           }
 
           // Calculate total expenses for this job
-          const totalExpenses = job.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+          const totalExpenses = job.expenses.reduce(
+            (sum, expense) => sum + expense.amount,
+            0
+          );
 
           const transformedJob = transformJobData(job);
           // Add total expenses to the response
           transformedJob.totalExpenses = totalExpenses;
           transformedJob.expenseCount = job.expenses.length;
-          
+
           return response.status(200).json(transformedJob);
         }
 
@@ -193,10 +203,13 @@ export default async function handler(request, response) {
         console.log('✅ Found jobs:', jobs.length);
 
         // Transform all jobs to match frontend expectations and add total expenses
-        const transformedJobs = jobs.map(job => {
+        const transformedJobs = jobs.map((job) => {
           const transformed = transformJobData(job);
           // Calculate total expenses for this job
-          const totalExpenses = job.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+          const totalExpenses = job.expenses.reduce(
+            (sum, expense) => sum + expense.amount,
+            0
+          );
           transformed.totalExpenses = totalExpenses;
           transformed.expenseCount = job.expenses.length;
           return transformed;
@@ -280,14 +293,21 @@ export default async function handler(request, response) {
         // Flatten nested data structures for database storage
         const flattenedUpdateData = flattenJobData(updateData);
 
-        // Remove fields that shouldn't be updated directly
+        // Remove fields that shouldn't be updated directly and handle clientId
         const {
           id: _,
           jobNumber: __,
           createdAt: ___,
           updatedAt: ____,
+          clientName: _____,
+          clientId: updateClientId,
           ...fieldsToUpdate
         } = flattenedUpdateData;
+
+        // If clientId is present, use nested connect
+        if (updateClientId) {
+          fieldsToUpdate.client = { connect: { id: updateClientId } };
+        }
 
         const updatedJob = await prisma.logisticsJob.update({
           where: { id: updateId },
