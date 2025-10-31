@@ -950,12 +950,11 @@ export default function PrintableInvoice({
                 <span className="font-semibold">
                   ({invoice.currency || 'USD'}){' '}
                 </span>
-                {invoice.amountInWords ||
-                  `${numberToWords(invoice.total || 0)} ${
-                    invoice.currency === 'RWF' ? 'Francs' : 'Dollars'
-                  } And Zero ${
-                    invoice.currency === 'RWF' ? 'Centimes' : 'Cents'
-                  }`}
+                {`${numberToWords(invoice.total || 0)} ${
+                  invoice.currency === 'RWF' ? 'Francs' : 'Dollars'
+                } And Zero ${
+                  invoice.currency === 'RWF' ? 'Centimes' : 'Cents'
+                }`}
               </div>
             </div>
 
