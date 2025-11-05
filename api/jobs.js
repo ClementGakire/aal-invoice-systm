@@ -11,7 +11,7 @@ const JOB_TYPE_ABBREVIATIONS = {
 };
 
 // Generate automatic job number based on job type and sequence
-async function generateJobNumber(jobType) {
+async function generateJobNumber(jobType, retryOffset = 0) {
   const abbreviation = JOB_TYPE_ABBREVIATIONS[jobType];
   if (!abbreviation) {
     throw new Error(`Invalid job type: ${jobType}`);
@@ -37,7 +37,7 @@ async function generateJobNumber(jobType) {
   });
 
   let maxSequence = 0;
-  
+
   // Extract all sequence numbers and find the maximum
   for (const job of existingJobs) {
     const parts = job.jobNumber.split('-');
@@ -49,7 +49,8 @@ async function generateJobNumber(jobType) {
     }
   }
 
-  const sequenceNumber = maxSequence + 1;
+  // Add retry offset to handle race conditions
+  const sequenceNumber = maxSequence + 1 + retryOffset;
   const sequence = sequenceNumber.toString().padStart(3, '0');
   return `${jobNumberPrefix}${sequence}`;
 }
@@ -244,27 +245,30 @@ export default async function handler(request, response) {
         let jobNumber;
         let retries = 0;
         const maxRetries = 5;
-        
+
         while (retries < maxRetries) {
-          jobNumber = await generateJobNumber(flattenedData.jobType);
-          
+          // Pass retry count as offset to generate different numbers on retry
+          jobNumber = await generateJobNumber(flattenedData.jobType, retries);
+
           // Check if this number already exists
           const existingJob = await prisma.logisticsJob.findUnique({
             where: { jobNumber },
             select: { id: true },
           });
-          
+
           if (!existingJob) {
             break; // Job number is unique, proceed
           }
-          
+
           retries++;
           if (retries >= maxRetries) {
-            throw new Error('Failed to generate unique job number after multiple attempts');
+            throw new Error(
+              'Failed to generate unique job number after multiple attempts'
+            );
           }
-          
+
           // Small delay to avoid tight loop
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
 
         const newJob = await prisma.logisticsJob.create({
