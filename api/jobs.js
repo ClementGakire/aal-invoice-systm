@@ -20,31 +20,36 @@ async function generateJobNumber(jobType) {
   const year = new Date().getFullYear().toString().slice(-2);
   const jobNumberPrefix = `AAL-${abbreviation}-${year}-`;
 
-  // Find the latest job number with this prefix to determine the next sequence
-  const latestJob = await prisma.logisticsJob.findFirst({
+  // Find all jobs with this prefix to determine the next sequence
+  const existingJobs = await prisma.logisticsJob.findMany({
     where: {
       jobType: jobType,
       jobNumber: {
         startsWith: jobNumberPrefix,
       },
     },
+    select: {
+      jobNumber: true,
+    },
     orderBy: {
-      jobNumber: 'desc',
+      createdAt: 'desc',
     },
   });
 
-  let sequenceNumber = 1;
-  if (latestJob && latestJob.jobNumber) {
-    // Extract sequence number from existing job number
-    const parts = latestJob.jobNumber.split('-');
+  let maxSequence = 0;
+  
+  // Extract all sequence numbers and find the maximum
+  for (const job of existingJobs) {
+    const parts = job.jobNumber.split('-');
     if (parts.length === 4) {
-      const lastSequence = parseInt(parts[3], 10);
-      if (!isNaN(lastSequence)) {
-        sequenceNumber = lastSequence + 1;
+      const sequence = parseInt(parts[3], 10);
+      if (!isNaN(sequence) && sequence > maxSequence) {
+        maxSequence = sequence;
       }
     }
   }
 
+  const sequenceNumber = maxSequence + 1;
   const sequence = sequenceNumber.toString().padStart(3, '0');
   return `${jobNumberPrefix}${sequence}`;
 }
