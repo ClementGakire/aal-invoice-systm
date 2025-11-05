@@ -240,8 +240,32 @@ export default async function handler(request, response) {
         // Flatten nested data structures for database storage
         const flattenedData = flattenJobData(jobData);
 
-        // Generate automatic job number based on job type
-        const jobNumber = await generateJobNumber(flattenedData.jobType);
+        // Generate automatic job number with retry logic for race conditions
+        let jobNumber;
+        let retries = 0;
+        const maxRetries = 5;
+        
+        while (retries < maxRetries) {
+          jobNumber = await generateJobNumber(flattenedData.jobType);
+          
+          // Check if this number already exists
+          const existingJob = await prisma.logisticsJob.findUnique({
+            where: { jobNumber },
+            select: { id: true },
+          });
+          
+          if (!existingJob) {
+            break; // Job number is unique, proceed
+          }
+          
+          retries++;
+          if (retries >= maxRetries) {
+            throw new Error('Failed to generate unique job number after multiple attempts');
+          }
+          
+          // Small delay to avoid tight loop
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
 
         const newJob = await prisma.logisticsJob.create({
           data: {
