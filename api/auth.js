@@ -66,6 +66,8 @@ export default async function handler(request, response) {
       'jimmy@aal.rw': 'jimmy123',
       'steven@aal.rw': 'steven123',
       'izereelise1@gmail.com': 'Izere3000',
+      'elise@aal.rw': 'Izere3000',
+      'daria.finance@aal.rw': 'Aucasa@12',
       'test@example.com': 'test123',
     };
 
